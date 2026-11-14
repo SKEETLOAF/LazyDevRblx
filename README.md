@@ -6,8 +6,9 @@ Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The i
 
 ## What is implemented in V0.3
 
-- Experimental portable ChatGPT Desktop plugin manifest, local marketplace entry and model-independent Studio connection skill. Desktop import is **not yet verified**.
-- A private per-user token handoff for MCP hosts that hide stderr. Run `npm run session` from this repository to view the active token locally.
+- Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. Individual-client installations remain **unverified**.
+- One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
+- A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
 - Dependency-free Node.js stdio MCP server with seven tools: list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
 - Optional exact-span edit proposals reject missing or repeated matches; the result is still a complete-source proposal that must be reviewed and explicitly approved in Studio.
 - Read-only hierarchy snapshots: up to 128 Instances and depth 4, with a narrow allowlist of BasePart and GUI properties. Names and class identities are collected, but **no script source, arbitrary properties, or runtime values** are collected by this feature.
@@ -27,22 +28,22 @@ npm test
 npm start
 ```
 
-The bridge listens on `127.0.0.1:43187`. It prints a **new random token to stderr** at startup. Paste that token into the plugin review panel. Do not commit or share the token. For MCP clients, launch `node src/main.mjs` directly (not `npm start`, because npm may print banners to stdout and corrupt MCP messages). The Node process itself reserves stdout for newline-delimited JSON-RPC. The MCP client and Studio plugin must connect to the **same running process**; launching a second server on the same port will fail.
+The daemon listens on `127.0.0.1:43187`. Run `npm start` once to keep the Studio observations and proposals alive. It prints a new token to stderr and saves a private per-user handoff file. Paste the token into the Studio review panel only. MCP clients launch `node src/stdio-client.mjs`, which uses the same daemon, does not bind a port, and never puts credentials into MCP settings.
 
-Example *conceptual* MCP stdio client command: `node /absolute/path/to/LazyDevRblx/src/main.mjs`. Exact client configuration varies and is **not yet host-certified**. The bridge exits when its hosting process is stopped; all observations and proposals are in memory only.
+For Claude Desktop, Claude Code and Codex, generate path-correct settings using `node scripts/print-client-config.mjs claude-desktop`, `claude-code`, or `codex`. Direct single-client mode remains possible with `npm run mcp:direct`, but cannot coexist with a daemon on the same port. All snapshots remain in memory until the daemon exits. Real client compatibility remains to be verified.
 
 ## Desktop connection (experimental)
 
 The root `plugin.json` and `mcp.json` describe a local stdio MCP plugin. The repo marketplace is `.agents/plugins/marketplace.json`. ChatGPT Desktop plugin support depends on your client, plan and workspace; this is a **local development package**, not a public Directory listing or a proven ChatGPT connection.
 
-Stop any manually running bridge before your MCP desktop host launches its own process, because both need port `43187`. The local session file is stored under your Windows user profile and contains a secret; keep it out of screenshots, chats and GitHub. If your MCP host starts the bridge without showing stderr, run `npm run session` on the same PC to retrieve the token.
+Run the shared daemon **once** using `npm start`. Each supported local MCP host starts its own `src/stdio-client.mjs` relay, which shares the daemon's state and cannot apply script edits independently. The token remains inside the Windows user profile; never include it in screenshots or chat. See [Desktop connection](docs/DESKTOP-CONNECTION.md) for per-client configuration.
 
 See [Desktop connection](docs/DESKTOP-CONNECTION.md) for exact test gates and limitations.
 
 ## Local Studio plugin: manual test workflow
 
 1. Open a disposable Roblox Studio place. Use Studio's local-plugin workflow to install `studio/LAZYDevKit.plugin.lua` as a plugin Script. Do **not** paste it into a live game's runtime scripts.
-2. Start the local bridge from a terminal or from your MCP host. Open **LAZY DevKit** from the Studio Plugins toolbar and enter the session token shown in the process's stderr.
+2. Start the shared bridge daemon with `npm start`. Open **LAZY DevKit** from the Studio Plugins toolbar and paste the private token shown in that terminal. MCP hosts connect through separate stdio relays.
 3. To inspect structure without sending script source, select exactly one root Instance and click **Inspect selected hierarchy (no script source)**. The snapshot is bounded to 128 nodes and 4 descendant levels. The agent can call `lazydev_list_structures` and `lazydev_read_structure`. Every hierarchy capture requires a manual button click.
 4. To share script source, select exactly one `Script`, `LocalScript`, or `ModuleScript` in Explorer. Click **Inspect selected script**. This deliberately sends its edit-time source to the local bridge; no source is shared by default.
 5. Use an MCP-capable agent in that **same bridge process**. Call `lazydev_list_observations`, then `lazydev_read_observation`. Prefer `lazydev_propose_scoped_edit` for narrow fixes: provide the exact unique `beforeText`, `afterText`, matching `snapshotId`, `expectedSha256`, and `rationale`. Use `lazydev_propose_script_edit` only when a whole-source replacement is justified.

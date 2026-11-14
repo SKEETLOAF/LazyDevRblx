@@ -1,41 +1,47 @@
-# Desktop connection: local-first V0.3
+# LAZY DevKit: Windows PC multi-client connection
 
-**Status:** Experimental package, not yet verified in ChatGPT Desktop. Windows-first. Roblox Studio and the MCP bridge must run on the same PC and Windows user account.
+**Status:** Experimental, not yet verified in live ChatGPT Desktop, Claude Desktop, Claude Code, or Codex sessions. The user has confirmed one successful Studio-to-localhost hierarchy inspection with two nodes. The Node tests verify bridge and simulated multi-client traffic, not each AI client installation.
 
-## Observed evidence
+## Architecture
 
-- One real Windows Roblox Studio inspection successfully sent a selected two-node hierarchy to the localhost bridge. This establishes the Studio-to-Node HTTP path for that test.
-- Existing Node tests validate MCP stdio tools and simulated Studio HTTP payloads. They do not validate MCP client import or edit approval inside Roblox Studio.
+1. Run **one persistent daemon** on Windows using `npm start` in the LAZY DevKit repository. It owns the authenticated HTTP endpoint `127.0.0.1:43187` and the shared state.
+2. The Roblox Studio plugin uses the daemon's private bearer token for manual hierarchy and source inspections, and for the Studio-side approval process.
+3. Each supported MCP host launches a small stdio **client**, `src/stdio-client.mjs`. Clients read their token from the same Windows user-profile session file and relay calls through the daemon. They cannot directly apply script edits.
+4. Stop the daemon to clear all in-memory observations and invalidate its token. Launching another daemon on the same port results in a clear conflict.
 
-## Packaging
+Do not install a second listening bridge per AI client. Do not expose the loopback port or copy its bearer token into prompts or committed settings.
 
-- Root `plugin.json` is the portable Agent Plugins manifest.
-- Root `mcp.json` configures a local stdio server launched with `node ${PLUGIN_ROOT}/src/main.mjs`.
-- `.agents/plugins/marketplace.json` contains a local repo marketplace entry referencing the repository root, so the server files are not duplicated.
-- `skills/studio-connection/SKILL.md` describes safe opt-in inspection and review.
-- `src/session.mjs` provides a temporary per-user session token handoff for hosts that hide stderr, accessible locally via `npm run session`.
+## First Windows trial
 
-OpenAI documents local plugin marketplaces and MCP packaging in https://developers.openai.com/plugins/build/plugins. Public listing of local MCP plugins separately requires approved partner status: https://developers.openai.com/plugins/deploy/desktop-only. This package is **not** a public ChatGPT plugin.
+1. Keep your disposable Studio place open. Stop the old bridge with Ctrl+C, update the checkout using `git pull origin main`, and run `npm test`.
+2. Launch `npm start` once in PowerShell. Leave that one process running.
+3. In another PowerShell tab, run `npm run session` and privately paste its verified token into the Studio LAZY DevKit panel. Do not send or screenshot the token.
+4. If ChatGPT Desktop supports repo-local plugin marketplaces, install the repository plugin from `.agents/plugins/marketplace.json`. Root `mcp.json` launches the stdio relay, **not** the daemon. The current session still needs an actual ChatGPT Desktop tool-discovery test.
+5. In Studio, select `Workspace.DevKitProbe`, press **Inspect selected hierarchy**, and request `lazydev_list_structures` and `lazydev_read_structure` from the MCP-enabled desktop client. The real 2-node folder/Marker result should appear.
 
-## PC test procedure
+## Claude Desktop, Claude Code and Codex
 
-1. Save your Studio place and keep Studio open. In PowerShell, stop the manually launched bridge with Ctrl+C before allowing a desktop host to start a new bridge on port 43187.
-2. Pull `main` and run `npm test` on your PC.
-3. In ChatGPT Desktop, open Plugins and look for the LAZY DevKit local marketplace plugin if your client supports repo marketplace discovery. This is **not guaranteed** to be available for every user, version or workspace.
-4. If the local plugin installs and starts, run `npm run session` from the checked-out repository to see the active token on your PC. Paste it privately into the existing Studio plugin.
-5. In Studio, select `Workspace.DevKitProbe` and click `Inspect selected hierarchy (no script source)`.
-6. In the MCP-enabled desktop chat, ask for `lazydev_list_structures`, then `lazydev_read_structure` with the returned structureId. Verify the folder and Marker appear, and compare the node count.
-7. For script edits, use only a disposable place and follow the separate manual approval checklist.
+Use the same source files and running daemon. On the same PC, from the repository directory, generate path-correct setup snippets using:
 
-## If unavailable
+```powershell
+node scripts/print-client-config.mjs claude-desktop
+node scripts/print-client-config.mjs claude-code
+node scripts/print-client-config.mjs codex
+```
 
-- A browser ChatGPT chat and regular mobile chat cannot directly access your PC's 127.0.0.1 server. Do not expose the existing Studio HTTP port to the public internet.
-- If the local marketplace entry is not discoverable, use an approved supported local MCP client for testing or report the blocker. Do not assert that the connection works.
-- Opening a second Node process while the manual bridge is active causes a port conflict. Stop the first process before trying again.
+- **Claude Desktop:** Merge the generated `mcpServers` object into the existing `%APPDATA%\Claude\claude_desktop_config.json`; preserve other entries. Restart Claude Desktop and inspect its MCP tools.
+- **Claude Code:** Run the generated `claude mcp add` command; verify with `claude mcp list`. The configuration is independent of model subscription limits.
+- **Codex CLI:** Add the generated `[mcp_servers.lazy-devkit]` block to the existing `~/.codex/config.toml` without overwriting unrelated entries; verify with `codex mcp list`.
+- **ChatGPT Desktop / Codex plugin:** Import from the repo-local marketplace if that UI is available. Root `mcp.json` points at the same relay. This local plugin has not been submitted to the public directory.
 
-## Security
+Claude and Codex's local MCP capabilities and configuration instructions are documented by their providers: [Anthropic MCP](https://docs.anthropic.com/en/docs/mcp), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp), and [OpenAI plugin packaging](https://developers.openai.com/plugins/build/plugins). Client UIs and availability can change; if a client cannot load this package, record the exact error rather than claiming compatibility.
 
-- The session file is in the current user profile at `~/.lazy-devkit/session.json`, and contains a bearer token. Other software running as your Windows account can potentially read it.
-- Never send a session token in chat, commit it to GitHub, or include it in a screenshot. Restarting the bridge rotates it.
-- Installed Roblox Studio local plugins are not automatically updated by `git pull`; reinstall the plugin script when changed.
-- The MCP client cannot claim gameplay or editor correctness from a Studio-reported receipt. The Studio integration and undo behavior still need real end-to-end verification.
+## Safety and verification
+
+- Every AI can **inspect** opted-in observations and **propose** modifications. Only the Studio plugin can apply changes following explicit user approval. No client can bypass the script-review UI through the exposed MCP tools.
+- The session file `~/.lazy-devkit/session.json` contains a secret and is only suitable for a trusted Windows user account. Other programs under the same account may be able to read it. `npm run session` prints it **locally**, not into an MCP result.
+- GitHub updates do not automatically update your installed local Roblox Studio plugin. Reinstall it manually only when its Lua source changes.
+- Each client needs real host testing: initialization, tool listing, shared snapshot read, disconnection recovery, and a disposable script proposal/rejection. Green Node CI is not a substitute.
+- No screenshot, visual output, automated third-party animation/VFX plugin access, or actual script apply+undo test has been completed yet.
+
+See [Studio integration checklist](V0-INTEGRATION-CHECKLIST.md) for remaining runtime gates.

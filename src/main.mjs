@@ -35,4 +35,6 @@ server.listen(port, '127.0.0.1', () => {
   }
   process.stderr.write(`Studio session token (keep private): ${token}\n`);
 });
-attachStdio(state);
+// The daemon owns all observations. A separate stdio client can connect to it
+// from ChatGPT, Claude or Codex without attempting to bind the Studio port.
+if (process.env.LAZYDEV_DAEMON !== '1') attachStdio(state);

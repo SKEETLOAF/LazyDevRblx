@@ -13,7 +13,9 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Desktop client discovers or imports the local plugin package and launches the bridge.
 - [ ] Desktop client's MCP tools read the same manually shared Studio observations as the bridge process.
 - [ ] `npm run session` retrieves a live bridge token locally and refuses to display a stale token.
-- [ ] Restarting the bridge rotates the token, and stopping it cleans up the session handoff.
+- [ ] Restarting the daemon rotates the token, and stopping it cleans up the session handoff.
+- [ ] ChatGPT, Claude, and Codex stdio clients initialize against one daemon and read the same snapshot without binding a second Studio port.
+- [ ] Each local AI client's installation and tool discovery is verified with actual host software, not inferred from Node tests.
 - [ ] The Studio panel shows the full old and proposed source before approval.
 - [ ] Reject leaves source unchanged and returns a rejected receipt.
 - [ ] Scoped change containing one unique exact match works after explicit approval; absent/ambiguous matches fail before review.

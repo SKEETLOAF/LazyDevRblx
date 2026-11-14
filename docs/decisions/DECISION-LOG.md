@@ -23,6 +23,8 @@
 | D-016 | Proposed; experimentally implemented | Optional bounded hierarchy capture: manual opt-in, max 128 nodes, depth 4, only allowlisted structural/visual properties; no source collection. Studio verification remains pending. |
 | D-017 | Proposed; experimentally implemented | Exact-span source edits match one unique `beforeText` string against the inspected SHA-256 snapshot; they still require explicit Studio approval and are not collaborative merges. |
 
+| D-018 | Proposed; experimentally implemented | One explicit per-user Studio daemon, with independent stdio MCP relays for ChatGPT, Claude and Codex. Clients share opted-in observations and cannot bypass Studio approval. Each AI host requires its own integration test. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

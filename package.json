@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned inspection and script-edit proposal bridge for Roblox Studio",
-  "engines": { "node": ">=20" },
-  "scripts": { "start": "node src/main.mjs", "test": "node --test", "session": "node scripts/show-session.mjs" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/daemon.mjs",
+    "test": "node --test",
+    "session": "node scripts/show-session.mjs",
+    "mcp:direct": "node src/main.mjs",
+    "mcp:client": "node src/stdio-client.mjs"
+  }
 }
