@@ -1,11 +1,13 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.2 is an executable but experimental script-review and structured-inspection bridge, not a finished visual development agent.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.3 adds experimental local desktop MCP packaging and token handoff to the script-review and structural inspection bridge. It is not a finished visual development agent.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V0.2
+## What is implemented in V0.3
 
+- Experimental portable ChatGPT Desktop plugin manifest, local marketplace entry and model-independent Studio connection skill. Desktop import is **not yet verified**.
+- A private per-user token handoff for MCP hosts that hide stderr. Run `npm run session` from this repository to view the active token locally.
 - Dependency-free Node.js stdio MCP server with seven tools: list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
 - Optional exact-span edit proposals reject missing or repeated matches; the result is still a complete-source proposal that must be reviewed and explicitly approved in Studio.
 - Read-only hierarchy snapshots: up to 128 Instances and depth 4, with a narrow allowlist of BasePart and GUI properties. Names and class identities are collected, but **no script source, arbitrary properties, or runtime values** are collected by this feature.
@@ -29,6 +31,14 @@ The bridge listens on `127.0.0.1:43187`. It prints a **new random token to stder
 
 Example *conceptual* MCP stdio client command: `node /absolute/path/to/LazyDevRblx/src/main.mjs`. Exact client configuration varies and is **not yet host-certified**. The bridge exits when its hosting process is stopped; all observations and proposals are in memory only.
 
+## Desktop connection (experimental)
+
+The root `plugin.json` and `mcp.json` describe a local stdio MCP plugin. The repo marketplace is `.agents/plugins/marketplace.json`. ChatGPT Desktop plugin support depends on your client, plan and workspace; this is a **local development package**, not a public Directory listing or a proven ChatGPT connection.
+
+Stop any manually running bridge before your MCP desktop host launches its own process, because both need port `43187`. The local session file is stored under your Windows user profile and contains a secret; keep it out of screenshots, chats and GitHub. If your MCP host starts the bridge without showing stderr, run `npm run session` on the same PC to retrieve the token.
+
+See [Desktop connection](docs/DESKTOP-CONNECTION.md) for exact test gates and limitations.
+
 ## Local Studio plugin: manual test workflow
 
 1. Open a disposable Roblox Studio place. Use Studio's local-plugin workflow to install `studio/LAZYDevKit.plugin.lua` as a plugin Script. Do **not** paste it into a live game's runtime scripts.
@@ -43,6 +53,7 @@ If `HttpService` asks for permission to contact `127.0.0.1`, approve it for this
 
 ## Safety and limitations
 
+- The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
 - Localhost is **not** automatically trustworthy. A separate bearer token protects every HTTP route and browser-origin requests are rejected; a local process with the token still has the session's privileges. Do not bind this service to a public interface.
 - The model can **propose** script source, but cannot directly apply it. The Studio user chooses when to share source and whether to commit a proposal.
 - Exact-span edits are calculated against the captured script source, then delivered as full replacements to the Studio plugin. This is **not** an AST-based patch or collaborative merge. Exact-span matching refuses missing and ambiguous text; Studio must also reject changes to the source after inspection.

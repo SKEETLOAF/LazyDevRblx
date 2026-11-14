@@ -221,7 +221,7 @@ structureButton.MouseButton1Click:Connect(function()
         local evidence = collectStructure(selected[1])
         local response = request("POST", "/v1/studio/inspect-tree", evidence)
         infoLabel.Text = "Hierarchy: " .. response.rootPath ..
-            "\\nNodes: " .. response.nodeCount ..
+            "\nNodes: " .. response.nodeCount ..
             (response.truncated and " (partial snapshot)" or " (complete within depth 4)")
         setStatus("Read-only hierarchy shared with bridge. No script source sent. " ..
             "Use lazydev_list_structures and lazydev_read_structure in your MCP client.")
