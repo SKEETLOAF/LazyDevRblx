@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { StructureStore } from './structure.mjs';
+import { SceneProposalStore, SceneInputError } from './scene.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -31,6 +32,7 @@ export class DevKitState {
     this.latestByInstance = new Map();
     this.proposals = new Map();
     this.structures = new StructureStore();
+    this.scene = new SceneProposalStore(this.structures);
   }
 
   inspect(input) {
@@ -84,6 +86,38 @@ export class DevKitState {
     const result = this.structures.read(requireString(id, 'structureId', 100));
     if (!result) throw new InputError('Structure observation not found or expired', 404);
     return result;
+  }
+
+  proposeSceneAction(input) {
+    try { return this.scene.propose(input); }
+    catch (error) {
+      if (error instanceof SceneInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  pendingScene(structureId) {
+    try { return this.scene.pending(structureId); }
+    catch (error) {
+      if (error instanceof SceneInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  sceneStatus(id) {
+    try { return this.scene.status(id); }
+    catch (error) {
+      if (error instanceof SceneInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  finishSceneAction(id, input) {
+    try { return this.scene.finish(id, input); }
+    catch (error) {
+      if (error instanceof SceneInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
   }
 
   proposeScopedEdit(input) {

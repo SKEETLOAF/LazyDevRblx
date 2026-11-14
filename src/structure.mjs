@@ -75,20 +75,31 @@ export function normalizeStructure(input) {
 }
 
 export class StructureStore {
-  constructor() { this.observations = new Map(); }
+  constructor() { this.observations = new Map(); this.latestByPath = new Map(); }
 
   inspect(input, randomUUID) {
     const normalized = normalizeStructure(input);
     const observation = { structureId: randomUUID(),
       ...normalized, inspectedAt: new Date().toISOString() };
     this.observations.set(observation.structureId, observation);
-    while (this.observations.size > STRUCTURE_LIMIT) this.observations.delete(this.observations.keys().next().value);
+    this.latestByPath.set(observation.rootPath, observation.structureId);
+    while (this.observations.size > STRUCTURE_LIMIT) {
+      const oldId = this.observations.keys().next().value;
+      const old = this.observations.get(oldId);
+      this.observations.delete(oldId);
+      if (this.latestByPath.get(old.rootPath) === oldId) this.latestByPath.delete(old.rootPath);
+    }
     return this.metadata(observation);
   }
 
   metadata(observation) {
     const { structureId, rootPath, truncated, inspectedAt, nodes } = observation;
     return { structureId, rootPath, truncated, inspectedAt, nodeCount: nodes.length };
+  }
+
+  isLatest(id) {
+    const observation = this.observations.get(id);
+    return Boolean(observation && this.latestByPath.get(observation.rootPath) === id);
   }
 
   list() { return [...this.observations.values()].map(o => this.metadata(o)); }

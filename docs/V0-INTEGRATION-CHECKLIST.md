@@ -1,4 +1,4 @@
-# V0 / V0.3 Studio integration verification (partially executed)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -28,6 +28,22 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Modify an open Script Editor during the callback race; verify `UpdateSourceAsync` cancellation does not overwrite newer edits.
 - [ ] Simulate bridge disconnect after a committed update; verify the plugin reports an uncertain receipt, not false success to the MCP agent.
 - [ ] Restart the bridge; prior in-memory snapshots are absent, not silently reused.
+
+## V0.4 Instance action checks (not yet executed in Studio)
+
+- [ ] Install the updated V0.4 Roblox Studio local plugin, restart the single local daemon, and reconnect ChatGPT.
+- [ ] Selecting `Workspace.DevKit Probe` and clicking Inspect produces a fresh structure ID.
+- [ ] AI can propose creating one `Part` under the observed Folder; Studio shows action, name, class, target, and reason before approval.
+- [ ] Rejecting an Instance action leaves the hierarchy unchanged and reports rejection.
+- [ ] Approving the Part creation produces exactly one child, then Undo removes it and Redo restores it.
+- [ ] Trying to create a duplicate child name fails safely without an unwanted extra Instance.
+- [ ] Re-inspecting a hierarchy invalidates proposals made against the older observation.
+- [ ] A stale parent rename, replacement, changed property, or changed selection prevents application.
+- [ ] Inspecting a Part, proposing `Anchored=true`, approving, undoing and redoing works.
+- [ ] Studio rejects unsupported classes, arbitrary `Source`, `Parent`, and other dangerous property updates.
+- [ ] Studio UI/receipts handle daemon disconnect after an applied change without applying twice.
+- [ ] GUI creation under StarterGui/ScreenGui and GUI property edits work in a disposable place.
+- [ ] Check Lua syntax/API support of new UI and approval handler in the currently installed Windows Studio build.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 
