@@ -39,10 +39,13 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
       if (a.length !== b.length || !timingSafeEqual(a, b)) throw new InputError('Authentication required', 401);
       const url = new URL(req.url ?? '/', 'http://127.0.0.1');
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.1.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.2.0' });
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/inspect') {
         return send(res, 201, state.inspect(await readJson(req)));
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/studio/inspect-tree') {
+        return send(res, 201, state.inspectStructure(await readJson(req)));
       }
       if (req.method === 'GET' && url.pathname === '/v1/studio/pending') {
         return send(res, 200, { proposal: state.pendingFor(url.searchParams.get('instanceId')) });

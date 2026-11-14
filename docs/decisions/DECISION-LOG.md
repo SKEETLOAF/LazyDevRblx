@@ -20,6 +20,9 @@
 | D-014 | Proposed | Fast / Balanced / Thorough verification settings without weakening permission checks. |
 | D-015 | Proposed | Optional public extension API and contributed adapters after core functionality is stable. |
 
+| D-016 | Proposed; experimentally implemented | Optional bounded hierarchy capture: manual opt-in, max 128 nodes, depth 4, only allowlisted structural/visual properties; no source collection. Studio verification remains pending. |
+| D-017 | Proposed; experimentally implemented | Exact-span source edits match one unique `beforeText` string against the inspected SHA-256 snapshot; they still require explicit Studio approval and are not collaborative merges. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.
