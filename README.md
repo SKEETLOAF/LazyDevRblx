@@ -6,7 +6,7 @@ Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The i
 
 ## What is implemented in V0.4
 
-- Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. Individual-client installations remain **unverified**.
+- Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
 - Dependency-free Node.js stdio MCP server with nine tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.

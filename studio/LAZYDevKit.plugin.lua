@@ -459,7 +459,14 @@ sceneApproveButton.MouseButton1Click:Connect(function()
                 tostring(changeError):sub(1, 170))
             return
         end
-        ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Commit)
+        local committed, commitError = pcall(function()
+            ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Commit)
+        end)
+        if not committed then
+            reportSceneOutcome(pending, "failed", "Instance mutation was attempted but Undo commit is uncertain. " ..
+                "Inspect the result; do not apply again. " .. tostring(commitError):sub(1, 100))
+            return
+        end
         reportSceneOutcome(pending, "applied", "Instance action applied in Studio. Undo is available; re-inspect to verify.")
     end)
 end)
