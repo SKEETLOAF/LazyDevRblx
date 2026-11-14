@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { StructureStore } from './structure.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -29,6 +30,7 @@ export class DevKitState {
     this.snapshots = new Map();
     this.latestByInstance = new Map();
     this.proposals = new Map();
+    this.structures = new StructureStore();
   }
 
   inspect(input) {
@@ -71,6 +73,43 @@ export class DevKitState {
     return { ...this.metadata(snapshot), source: snapshot.source };
   }
 
+  inspectStructure(input) {
+    try { return this.structures.inspect(input, randomUUID); }
+    catch (error) { throw new InputError(error.message); }
+  }
+
+  listStructures() { return this.structures.list(); }
+
+  readStructure(id) {
+    const result = this.structures.read(requireString(id, 'structureId', 100));
+    if (!result) throw new InputError('Structure observation not found or expired', 404);
+    return result;
+  }
+
+  proposeScopedEdit(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new InputError('Expected scoped edit object');
+    }
+    const snapshotId = requireString(input.snapshotId, 'snapshotId', 100);
+    const beforeText = requireString(input.beforeText, 'beforeText', 16 * 1024);
+    const afterText = requireString(input.afterText, 'afterText', 16 * 1024, { allowEmpty: true });
+    const expectedSha256 = requireString(input.expectedSha256, 'expectedSha256', 64);
+    const rationale = requireString(input.rationale, 'rationale', 1000);
+    const snapshot = this.snapshots.get(snapshotId);
+    if (!snapshot || this.latestByInstance.get(snapshot.instanceId) !== snapshotId) {
+      throw new InputError('Stale or missing observation; inspect again', 409);
+    }
+    if (snapshot.sha256 !== expectedSha256) throw new InputError('Source hash mismatch; inspect again', 409);
+    const first = snapshot.source.indexOf(beforeText);
+    if (first === -1) throw new InputError('Exact text not present in inspected source', 409);
+    if (snapshot.source.indexOf(beforeText, first + 1) !== -1) {
+      throw new InputError('Exact text occurs more than once; include more context', 409);
+    }
+    const newSource = snapshot.source.slice(0, first) + afterText +
+      snapshot.source.slice(first + beforeText.length);
+    return this.propose({ snapshotId, expectedSha256, newSource, rationale, kind: 'scoped' });
+  }
+
   propose(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new InputError('Expected proposal object');
     const snapshotId = requireString(input.snapshotId, 'snapshotId', 100);
@@ -90,15 +129,15 @@ export class DevKitState {
     }
     const proposal = { id: randomUUID(), snapshotId, instanceId: snapshot.instanceId,
       path: snapshot.path, expectedSha256, newSource, rationale,
-      status: 'pending', createdAt: new Date().toISOString() };
+      kind: input.kind === 'scoped' ? 'scoped' : 'replacement', status: 'pending', createdAt: new Date().toISOString() };
     this.proposals.set(proposal.id, proposal);
     while (this.proposals.size > PROPOSAL_LIMIT) this.proposals.delete(this.proposals.keys().next().value);
     return this.proposalMetadata(proposal);
   }
 
   proposalMetadata(proposal) {
-    const { id, snapshotId, instanceId, path, expectedSha256, rationale, status, createdAt, resultNote } = proposal;
-    return { id, snapshotId, instanceId, path, expectedSha256, rationale, status, createdAt, ...(resultNote ? { resultNote } : {}) };
+    const { id, snapshotId, instanceId, path, expectedSha256, rationale, kind, status, createdAt, resultNote } = proposal;
+    return { id, snapshotId, instanceId, path, expectedSha256, rationale, kind, status, createdAt, ...(resultNote ? { resultNote } : {}) };
   }
 
   pendingFor(instanceId) {

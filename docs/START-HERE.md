@@ -8,6 +8,7 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 2. [Decision log](decisions/DECISION-LOG.md): Accepted constraints, proposals, open questions, and superseded ideas.
 3. [Executable V0 README](../README.md): What has been implemented, how to run it, and what has **not** been tested.
 4. [Studio verification checklist](V0-INTEGRATION-CHECKLIST.md): Manual integration tests that remain open.
+5. [Phase 2 implementation](PHASE-2-IMPLEMENTATION.md): Bounded hierarchy snapshots, exact-span proposal rules, and what remains unverified.
 
 Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
 
@@ -32,4 +33,4 @@ Architecture, Skeleton → Flesh → Skin roadmap, and integration research were
 
 When new evidence or testing changes a conclusion, record the evidence, update the affected decision and cross-references, and leave a brief note indicating what was superseded. Keep unresolved assumptions visible.
 
-**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** Node bridge implementation and Node tests exist; Studio integration is unverified.
+**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** V0.2 Node MCP bridge, scoped proposal logic, structural snapshot contract and Node tests exist; Studio integration is unverified.

@@ -5,10 +5,15 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Local plugin opens a dock panel; no source is transmitted before explicit Inspect.
 - [ ] Loopback request and user permission work on a fresh Studio installation.
 - [ ] Selecting exactly one script sends the editor-visible unsaved source (not an out-of-date `Script.Source`).
+- [ ] Explicit hierarchy inspection sends at most 128 nodes (depth 0–4), reports truncation and never includes a script's Source property.
+- [ ] Hierarchy inspection of a large/complex place does not freeze Studio; report the selected root and partial coverage.
+- [ ] GUI and BasePart properties match the allowlist and serialize in the expected types.
 - [ ] Unauthorized or wrong-token HTTP requests fail and do not disclose source/proposals.
 - [ ] MCP client can initialize, list tools, read an opted-in snapshot, and queue a proposal in the same process.
 - [ ] The Studio panel shows the full old and proposed source before approval.
 - [ ] Reject leaves source unchanged and returns a rejected receipt.
+- [ ] Scoped change containing one unique exact match works after explicit approval; absent/ambiguous matches fail before review.
+- [ ] An inspected hierarchy cannot be used by the agent to request a script modification without a separate source inspection.
 - [ ] Approve changes the intended script, records one Undo action, and never runs the script as a side effect.
 - [ ] Editing source after Inspect but before Approve produces a stale result without overwriting manual edits.
 - [ ] Modify an open Script Editor during the callback race; verify `UpdateSourceAsync` cancellation does not overwrite newer edits.
