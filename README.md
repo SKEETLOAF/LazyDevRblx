@@ -23,7 +23,7 @@ npm test
 npm start
 ```
 
-The bridge listens on `127.0.0.1:43187`. It prints a **new random token to stderr** at startup. Paste that token into the plugin review panel. Do not commit or share the token. When an MCP client launches `npm start` as a stdio server, its stdout remains reserved for newline-delimited JSON-RPC. The MCP client and Studio plugin must connect to the **same running process**; launching a second server on the same port will fail.
+The bridge listens on `127.0.0.1:43187`. It prints a **new random token to stderr** at startup. Paste that token into the plugin review panel. Do not commit or share the token. For MCP clients, launch `node src/main.mjs` directly (not `npm start`, because npm may print banners to stdout and corrupt MCP messages). The Node process itself reserves stdout for newline-delimited JSON-RPC. The MCP client and Studio plugin must connect to the **same running process**; launching a second server on the same port will fail.
 
 Example *conceptual* MCP stdio client command: `node /absolute/path/to/LazyDevRblx/src/main.mjs`. Exact client configuration varies and is **not yet host-certified**. The bridge exits when its hosting process is stopped; all observations and proposals are in memory only.
 
