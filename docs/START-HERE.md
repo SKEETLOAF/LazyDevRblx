@@ -9,6 +9,7 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 3. [Executable V0 README](../README.md): What has been implemented, how to run it, and what has **not** been tested.
 4. [Studio verification checklist](V0-INTEGRATION-CHECKLIST.md): Manual integration tests that remain open.
 5. [Phase 2 implementation](PHASE-2-IMPLEMENTATION.md): Bounded hierarchy snapshots, exact-span proposal rules, and what remains unverified.
+6. [Desktop connection](DESKTOP-CONNECTION.md): Experimental multi-client MCP packaging, shared daemon, token handoff, and Windows PC setup.
 
 Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
 

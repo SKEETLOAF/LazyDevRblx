@@ -1,0 +1,13 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "lazy-devkit",
+  "version": "0.3.0",
+  "description": "Local-first Roblox Studio inspections and manually approved script edit proposals.",
+  "repository": "https://github.com/SKEETLOAF/LazyDevRblx",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/studio-connection/SKILL.md",
+      "requires_local_executor": true
+    }
+  }
+}

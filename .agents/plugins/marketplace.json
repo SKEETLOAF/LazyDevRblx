@@ -1,0 +1,17 @@
+{
+  "name": "lazy-devkit-local",
+  "plugins": [
+    {
+      "name": "lazy-devkit",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

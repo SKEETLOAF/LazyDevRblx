@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { InputError } from './state.mjs';
+import { handleRpc } from './mcp.mjs';
 
 const BODY_LIMIT = 350 * 1024;
 
@@ -38,8 +39,13 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
       const b = Buffer.from(token);
       if (a.length !== b.length || !timingSafeEqual(a, b)) throw new InputError('Authentication required', 401);
       const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+      if (req.method === 'POST' && url.pathname === '/v1/mcp') {
+        // Only authenticated local relay clients can reach the shared MCP
+        // handler. Studio's explicit approval remains the only edit path.
+        return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
+      }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.2.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.3.0' });
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/inspect') {
         return send(res, 201, state.inspect(await readJson(req)));

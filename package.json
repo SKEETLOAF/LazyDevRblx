@@ -1,9 +1,17 @@
 {
   "name": "lazy-devkit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned inspection and script-edit proposal bridge for Roblox Studio",
-  "engines": { "node": ">=20" },
-  "scripts": { "start": "node src/main.mjs", "test": "node --test" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/daemon.mjs",
+    "test": "node --test",
+    "session": "node scripts/show-session.mjs",
+    "mcp:direct": "node src/main.mjs",
+    "mcp:client": "node src/stdio-client.mjs"
+  }
 }
