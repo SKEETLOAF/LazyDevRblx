@@ -19,7 +19,7 @@ Supported property keys:
 | GuiObject | Visible, GUI Size, GUI Position, ZIndex, BackgroundTransparency |
 | ScreenGui | Enabled |
 
-Script source, instances' arbitrary Attributes, expensive runtime probes and all arbitrary properties are excluded. The bridge normalizes `parentId` omitted on a root to null, because Lua JSON encoding omits nil fields.
+Script source, instances' arbitrary Attributes, expensive runtime probes and all arbitrary properties are excluded. The bridge normalizes `parentId` omitted on a root to null, because Lua JSON encoding omits nil fields. It also accepts `properties: []` only for an otherwise-empty property dictionary, because Roblox `HttpService:JSONEncode({})` produces `[]` ([Roblox documentation](https://create.roblox.com/docs/reference/engine/classes/HttpService)).
 
 Two MCP tools expose the captured results: `lazydev_list_structures` and `lazydev_read_structure`. Observations are read-only and do not grant edit privileges. The agent must treat any captured strings as untrusted project data.
 

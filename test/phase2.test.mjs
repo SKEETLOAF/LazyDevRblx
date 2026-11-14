@@ -37,6 +37,16 @@ test('bounded hierarchy is read-only and does not contain script source', () => 
   assert.equal(state.listObservations().length, 0, 'Hierarchy inspection must not also share source');
 });
 
+test('Luau empty dictionaries serialize as [] and absent root parent id is permitted', () => {
+  const root = { ...structure.nodes[0], properties: [] };
+  delete root.parentId; // Lua nil omitted by JSONEncode
+  const normalized = normalizeStructure({ ...structure, nodes: [root, structure.nodes[1]] });
+  assert.deepEqual(normalized.nodes[0].properties, {});
+  assert.equal(normalized.nodes[0].parentId, null);
+  assert.throws(() => normalizeStructure({ ...structure, nodes: [
+    { ...root, properties: [1] }, structure.nodes[1] ] }), /properties/);
+});
+
 test('hierarchy rejects malformed relations, unsafe properties and excessive size', () => {
   const state = new DevKitState();
   assert.throws(() => state.inspectStructure({...structure, nodes: [

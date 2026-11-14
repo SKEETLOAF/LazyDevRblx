@@ -57,10 +57,14 @@ export function normalizeStructure(input) {
         invalid('Invalid structure parent relationship');
       }
     }
-    if (!isObject(original.properties)) invalid('Node properties must be a simple object');
-    if (Object.keys(original.properties).length > 14) invalid('Too many node properties');
+    // Roblox HttpService:JSONEncode({}) serializes an empty dictionary as [].
+    // Accept only that zero-length array as an empty property object.
+    const rawProps = Array.isArray(original.properties) && original.properties.length === 0
+      ? {} : original.properties;
+    if (!isObject(rawProps)) invalid('Node properties must be a simple object');
+    if (Object.keys(rawProps).length > 14) invalid('Too many node properties');
     const properties = {};
-    for (const [key, value] of Object.entries(original.properties)) {
+    for (const [key, value] of Object.entries(rawProps)) {
       if (!checkProperty(key, value)) invalid('Unsupported or invalid property: ' + key);
       properties[key] = value;
     }
