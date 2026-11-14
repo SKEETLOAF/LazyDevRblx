@@ -1,15 +1,16 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.3 adds experimental local desktop MCP packaging and token handoff to the script-review and structural inspection bridge. It is not a finished visual development agent.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.4 adds user-approved Instance creation and property changes to the shared MCP/Studio bridge. It is not a finished visual development agent.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V0.3
+## What is implemented in V0.4
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. Individual-client installations remain **unverified**.
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
-- Dependency-free Node.js stdio MCP server with seven tools: list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Dependency-free Node.js stdio MCP server with nine tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Explicitly approved Instance actions: create a Folder, Model, Part, ScreenGui, Frame or TextLabel under compatible observed parents, or edit an allowlisted Part/GUI property. Each request is a **single action**, not an arbitrary command or Lua script. Studio checks the original selected object and inspected properties again before attempting the change, then records an Undo step.
 - Optional exact-span edit proposals reject missing or repeated matches; the result is still a complete-source proposal that must be reviewed and explicitly approved in Studio.
 - Read-only hierarchy snapshots: up to 128 Instances and depth 4, with a narrow allowlist of BasePart and GUI properties. Names and class identities are collected, but **no script source, arbitrary properties, or runtime values** are collected by this feature.
 - Token-protected localhost HTTP bridge for a manually operated Studio plugin.
@@ -17,7 +18,7 @@ Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The i
 - SHA-256 snapshot preconditions, exact-source check inside the plugin, single pending proposal per snapshot, size limits, loopback binding, and no autonomous application.
 - Node unit and HTTP integration tests (`npm test`).
 
-**Not verified:** Running the Luau plugin inside a real Roblox Studio session, plugin installation on particular Studio releases, network permissions on users' machines, complete MCP host compatibility, visual inspection, desktop automation, third-party plugin control, and gameplay behavior. These require hands-on integration tests.
+**Runtime evidence:** A Windows Studio user has verified a real ChatGPT-read hierarchy, a manually approved script edit, and Undo/Redo using V0.3. **Not yet verified:** The new V0.4 Instance action panel inside Studio, compatibility with Claude/Codex, arbitrary host versions, visual inspection, desktop automation, specialist plugin control, and game behavior. These need separate hands-on tests.
 
 ## Run the local bridge
 
@@ -52,10 +53,23 @@ See [Desktop connection](docs/DESKTOP-CONNECTION.md) for exact test gates and li
 
 If `HttpService` asks for permission to contact `127.0.0.1`, approve it for this plugin only if you trust this source and local process. Roblox's local networking rules and permissions may vary by Studio configuration. Network errors should not be interpreted as successful edits.
 
+## Instance-action test (V0.4, not yet Studio-tested)
+
+1. After pulling the updated repository, **stop and restart the one daemon** and **reinstall the updated Studio local plugin**. Existing local Studio installations are not updated by Git.
+2. In an empty place, select the `Workspace.DevKit Probe` Folder and click **Inspect selected hierarchy**.
+3. In the connected ChatGPT client, call `lazydev_list_structures` and `lazydev_read_structure`, then propose `lazydev_propose_scene_action` with `structureId`, `action: "create_child"`, `targetNodeId: 0`, `className: "Part"`, `name: "DevKitBlock"`, and a clear `rationale`.
+4. With the **same root Folder still selected**, click **Check for proposed Instance action** in Studio. Review the exact class, name, parent and rationale, then choose Approve or Reject.
+5. If approved, verify that a child Part exists, use **Edit → Undo**, then **Redo**. Re-inspect the hierarchy before asking the agent for another action.
+6. For a separate property test, inspect the Part and use `action: "set_property"`, `targetNodeId: 0`, `property: "Anchored"`, `value: true`. Review and approve, then test Undo/Redo. Use `lazydev_get_scene_proposal_status` to read the Studio-reported receipt.
+
+See [Phase 3 Instance actions](docs/PHASE-3-INSTANCE-ACTIONS.md) for allowlists, security assumptions, and remaining checks.
+
 ## Safety and limitations
 
 - The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
 - Localhost is **not** automatically trustworthy. A separate bearer token protects every HTTP route and browser-origin requests are rejected; a local process with the token still has the session's privileges. Do not bind this service to a public interface.
+- The model can **propose** script or Instance actions, but cannot directly apply them. Instance creation uses safe default Roblox properties; setting properties requires a second opt-in inspection and separate approval.
+- No unrestricted instance deletion, reparenting, methods, script creation, attributes, or arbitrary commands are available through the scene-action API.
 - The model can **propose** script source, but cannot directly apply it. The Studio user chooses when to share source and whether to commit a proposal.
 - Exact-span edits are calculated against the captured script source, then delivered as full replacements to the Studio plugin. This is **not** an AST-based patch or collaborative merge. Exact-span matching refuses missing and ambiguous text; Studio must also reject changes to the source after inspection.
 - Structure inspection deliberately captures only a bounded subset of Instances and allowlisted properties; a truncated tree must never be mistaken for a complete project scan. All captured names and scripts must be treated as untrusted inputs.
@@ -64,6 +78,6 @@ If `HttpService` asks for permission to contact `127.0.0.1`, approve it for this
 
 ## Next evidence gates
 
-Validate the plugin, `inspect-tree` payload, HTTP permission, scoped proposals, concurrent editor changes and Studio undo on an actual Windows Studio build. Then extend the prototype with a proper side-by-side diff, runtime diagnostics, event-driven observations and optional screenshot collection. No screenshot capture or specialist tool automation is currently implemented.
+Validate the V0.4 scene-action UI, property checks, stale observation behavior, and Undo/Redo in an actual Windows Studio build. Then extend the prototype with a proper side-by-side diff, runtime diagnostics, event-driven observations and optional screenshot collection. No screenshot capture or specialist tool automation is currently implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.

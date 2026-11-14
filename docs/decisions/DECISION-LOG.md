@@ -25,6 +25,8 @@
 
 | D-018 | Proposed; experimentally implemented | One explicit per-user Studio daemon, with independent stdio MCP relays for ChatGPT, Claude and Codex. Clients share opted-in observations and cannot bypass Studio approval. Each AI host requires its own integration test. |
 
+| D-019 | Proposed; implemented experimentally in V0.4 | Only one allowlisted Instance creation or typed property change may be proposed against a manually inspected structure. Require the original selected root, unchanged target identity/properties, explicit Studio approval, and undo recording. No arbitrary instance operations or code execution. Studio runtime verification pending. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

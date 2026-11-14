@@ -1,4 +1,4 @@
--- LAZY DevKit Studio review panel (V0.2 experimental, manual workflow).
+-- LAZY DevKit Studio review panel (V0.4 experimental; script and scene approvals).
 -- Install as a local Studio plugin Script. Never paste a session token into game scripts.
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
@@ -11,6 +11,8 @@ local MAX_NODES = 128
 local MAX_TREE_DEPTH = 4
 local tracked = nil
 local proposal = nil
+local trackedStructure = nil
+local sceneProposal = nil
 local busy = false
 
 local toolbar = plugin:CreateToolbar("LAZY DevKit")
@@ -86,6 +88,11 @@ end
 addLabel("Local bridge at 127.0.0.1:43187. Paste the one-session token printed by the Node bridge. No automatic polling or editing.", 52)
 local tokenBox = addBox("Paste one-session token here", 35, true)
 local structureButton = addButton("Inspect selected hierarchy (no script source)")
+local sceneCheckButton = addButton("Check for proposed Instance action")
+local sceneInfoLabel = addLabel("Instance actions: no proposal loaded.", 60)
+local scenePreview = addBox("Instance action preview", 100, false)
+local sceneApproveButton = addButton("Approve Instance action (Studio Undo)")
+local sceneRejectButton = addButton("Reject Instance action")
 local inspectButton = addButton("1. Inspect selected script (share source)")
 local checkButton = addButton("2. Check for a proposed edit")
 local infoLabel = addLabel("No script inspected.", 56)
@@ -171,6 +178,7 @@ end
 
 local function collectStructure(root)
     local nodes = {}
+    local references = {}
     local truncated = false
 
     local function collect(object, parentId, depth)
@@ -191,6 +199,7 @@ local function collectStructure(root)
         -- parentId on the root and normalizes it to null.
         if parentId ~= nil then item.parentId = parentId end
         table.insert(nodes, item)
+        references[id + 1] = object
 
         local children = object:GetChildren()
         table.sort(children, function(a, b)
@@ -211,20 +220,247 @@ local function collectStructure(root)
     end
 
     collect(root, nil, 0)
-    return { rootPath = root:GetFullName(), truncated = truncated, nodes = nodes }
+    return { rootPath = root:GetFullName(), truncated = truncated, nodes = nodes }, references
 end
 
 structureButton.MouseButton1Click:Connect(function()
     safeAction(function()
         local selected = Selection:Get()
         if #selected ~= 1 then error("Select exactly one root Instance in Explorer") end
-        local evidence = collectStructure(selected[1])
+        local evidence, references = collectStructure(selected[1])
         local response = request("POST", "/v1/studio/inspect-tree", evidence)
+        trackedStructure = {
+            root = selected[1], structureId = response.structureId,
+            evidence = evidence, references = references,
+        }
+        sceneProposal = nil
+        scenePreview.Text = ""
+        sceneInfoLabel.Text = "Inspected: " .. evidence.rootPath
         infoLabel.Text = "Hierarchy: " .. response.rootPath ..
             "\nNodes: " .. response.nodeCount ..
             (response.truncated and " (partial snapshot)" or " (complete within depth 4)")
         setStatus("Read-only hierarchy shared with bridge. No script source sent. " ..
             "Use lazydev_list_structures and lazydev_read_structure in your MCP client.")
+    end)
+end)
+
+-- Scene editing is intentionally tiny. It cannot delete, move, reparent, or
+-- create scripts. It is restricted to allowlisted creations and properties,
+-- with one explicitly approved and Studio-undoable action per proposal.
+local SCENE_PARENTS = {
+    Folder = {Workspace=true, Folder=true, Model=true, ServerStorage=true, ReplicatedStorage=true},
+    Model = {Workspace=true, Folder=true, Model=true, ServerStorage=true, ReplicatedStorage=true},
+    Part = {Workspace=true, Folder=true, Model=true, ServerStorage=true, ReplicatedStorage=true},
+    ScreenGui = {StarterGui=true},
+    Frame = {ScreenGui=true, Frame=true},
+    TextLabel = {ScreenGui=true, Frame=true},
+}
+local SCENE_PROPERTIES = {
+    Anchored = {Part=true}, CanCollide = {Part=true}, Position = {Part=true},
+    Size = {Part=true}, Color = {Part=true}, Material = {Part=true},
+    Transparency = {Part=true}, Enabled = {ScreenGui=true},
+    Visible = {Frame=true, TextLabel=true}, GuiSize = {Frame=true, TextLabel=true},
+    GuiPosition = {Frame=true, TextLabel=true}, ZIndex = {Frame=true, TextLabel=true},
+    BackgroundTransparency = {Frame=true, TextLabel=true},
+}
+local SCENE_MATERIALS = {
+    Plastic=true, SmoothPlastic=true, Neon=true, Wood=true, Metal=true,
+    Glass=true, Concrete=true, Slate=true, Fabric=true, Grass=true, Sand=true,
+    Brick=true, ForceField=true,
+}
+
+local function valuesEqual(a, b)
+    if type(a) ~= type(b) then return false end
+    if type(a) ~= "table" then return a == b end
+    for key, value in pairs(a) do
+        if not valuesEqual(value, b[key]) then return false end
+    end
+    for key, _ in pairs(b) do
+        if a[key] == nil then return false end
+    end
+    return true
+end
+
+local function numberIn(value, minValue, maxValue)
+    return type(value) == "number" and value == value and
+        value >= minValue and value <= maxValue
+end
+
+local function decodeSceneProperty(targetClass, property, value)
+    if not (SCENE_PROPERTIES[property] and SCENE_PROPERTIES[property][targetClass]) then
+        error("Property or Instance class is not permitted")
+    end
+    if property == "Anchored" or property == "CanCollide" or
+        property == "Enabled" or property == "Visible" then
+        if type(value) ~= "boolean" then error("Expected a boolean") end
+        return value
+    end
+    if property == "Transparency" or property == "BackgroundTransparency" then
+        if not numberIn(value, 0, 1) then error("Invalid transparency") end
+        return value
+    end
+    if property == "ZIndex" then
+        if not numberIn(value, 0, 1000) or value % 1 ~= 0 then error("Invalid ZIndex") end
+        return value
+    end
+    if property == "Material" then
+        if not SCENE_MATERIALS[value] then error("Material not allowed") end
+        return Enum.Material[value]
+    end
+    if property == "Position" or property == "Size" or property == "Color" then
+        if type(value) ~= "table" or #value ~= 3 then error("Expected vector of 3 numbers") end
+        local minValue, maxValue = -100000, 100000
+        if property == "Size" then minValue, maxValue = 0.05, 2048 end
+        if property == "Color" then minValue, maxValue = 0, 1 end
+        for _, component in ipairs(value) do
+            if not numberIn(component, minValue, maxValue) then error("Invalid vector component") end
+        end
+        if property == "Color" then return Color3.new(value[1], value[2], value[3]) end
+        return Vector3.new(value[1], value[2], value[3])
+    end
+    if property == "GuiSize" or property == "GuiPosition" then
+        if type(value) ~= "table" or
+            not numberIn(value.xScale, -100, 100) or
+            not numberIn(value.yScale, -100, 100) or
+            not numberIn(value.xOffset, -100000, 100000) or
+            not numberIn(value.yOffset, -100000, 100000) then
+            error("Invalid GUI dimensions")
+        end
+        return UDim2.new(value.xScale, value.xOffset, value.yScale, value.yOffset)
+    end
+    error("Unsupported property")
+end
+
+local function reportSceneOutcome(pending, outcome, note)
+    -- Clear the local action before attempting the network receipt. If
+    -- reporting fails after a committed change, never apply it twice.
+    sceneProposal = nil
+    scenePreview.Text = ""
+    local success, result = pcall(function()
+        return request("POST", "/v1/studio/scene/proposals/" .. pending.id .. "/decision", {
+            structureId = pending.structureId, outcome = outcome, note = note,
+        })
+    end)
+    if success then
+        sceneInfoLabel.Text = "Studio reported " .. result.status
+        setStatus(note)
+    else
+        setStatus("Studio action result: " .. outcome ..
+            ". Receipt failed; do NOT reapply. " .. tostring(result))
+    end
+end
+
+sceneCheckButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if not trackedStructure then error("Inspect a hierarchy first") end
+        local result = request("GET", "/v1/studio/scene/pending?structureId=" ..
+            HttpService:UrlEncode(trackedStructure.structureId))
+        sceneProposal = result.proposal
+        if not sceneProposal then
+            scenePreview.Text = ""
+            setStatus("No Instance action pending for this hierarchy inspection.")
+            return
+        end
+        if sceneProposal.structureId ~= trackedStructure.structureId then
+            sceneProposal = nil
+            error("Instance proposal targets a different inspection")
+        end
+        local pending = sceneProposal
+        local summary = pending.action .. " in " .. pending.path
+        if pending.action == "create_child" then
+            summary = "Create " .. pending.className .. " named " .. pending.name ..
+                " under " .. pending.path
+        elseif pending.action == "set_property" then
+            summary = "Change " .. pending.path .. "." .. pending.property
+        end
+        sceneInfoLabel.Text = summary
+        scenePreview.Text = "Reason: " .. pending.rationale ..
+            "\nAction: " .. pending.action ..
+            "\nTarget: " .. pending.path ..
+            (pending.action == "create_child" and
+                ("\nNew: " .. pending.className .. " / " .. pending.name) or
+                ("\nOld: " .. HttpService:JSONEncode(pending.beforeValue) ..
+                "\nNew: " .. HttpService:JSONEncode(pending.value)))
+        setStatus("No change has been applied. Review this single Instance action before approving.")
+    end)
+end)
+
+sceneRejectButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if not sceneProposal then error("No pending Instance action") end
+        reportSceneOutcome(sceneProposal, "rejected", "Instance action rejected in Studio")
+    end)
+end)
+
+sceneApproveButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if not sceneProposal or not trackedStructure then error("No inspected Instance action") end
+        local pending = sceneProposal
+        local inspection = trackedStructure
+        local selected = Selection:Get()
+        if #selected ~= 1 or selected[1] ~= inspection.root then
+            error("Reselect the inspected hierarchy root before approval")
+        end
+        if pending.structureId ~= inspection.structureId then
+            error("Proposal belongs to an older inspection")
+        end
+        local root = inspection.root
+        local node = inspection.evidence.nodes[pending.targetNodeId + 1]
+        local target = inspection.references[pending.targetNodeId + 1]
+        if not node or not target or not root:IsDescendantOf(game) or
+            root:GetFullName() ~= inspection.evidence.rootPath or
+            not (target == root or target:IsDescendantOf(root)) or
+            target:GetFullName() ~= node.path or target.ClassName ~= node.className or
+            pending.path ~= node.path or pending.targetClass ~= target.ClassName then
+            reportSceneOutcome(pending, "stale", "Hierarchy changed after inspection; no action applied")
+            return
+        end
+        if not valuesEqual(visibleProperties(target), pending.expectedProperties) then
+            reportSceneOutcome(pending, "stale", "Target properties changed; inspect again")
+            return
+        end
+        local prepared
+        if pending.action == "create_child" then
+            if not SCENE_PARENTS[pending.className] or
+                not SCENE_PARENTS[pending.className][target.ClassName] or
+                type(pending.name) ~= "string" or #pending.name > 64 or
+                not string.match(pending.name, "^[%a_][%w_ %-]*$") then
+                error("Requested creation is not permitted")
+            end
+            if target:FindFirstChild(pending.name) then
+                reportSceneOutcome(pending, "stale", "Name already exists under parent; no action applied")
+                return
+            end
+        elseif pending.action == "set_property" then
+            if node.properties[pending.property] == nil or
+                not valuesEqual(node.properties[pending.property], pending.beforeValue) then
+                reportSceneOutcome(pending, "stale", "Original property value mismatch")
+                return
+            end
+            prepared = decodeSceneProperty(target.ClassName, pending.property, pending.value)
+        else
+            error("Unknown Instance action; no edit attempted")
+        end
+        local recording = ChangeHistoryService:TryBeginRecording(
+            "LAZYDevKitSceneAction", "LAZY DevKit approved Instance action")
+        if not recording then error("Studio cannot start undo recording; nothing changed") end
+        local success, changeError = pcall(function()
+            if pending.action == "create_child" then
+                local object = Instance.new(pending.className)
+                object.Name = pending.name
+                object.Parent = target
+            else
+                target[pending.property] = prepared
+            end
+        end)
+        if not success then
+            ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Cancel)
+            reportSceneOutcome(pending, "failed", "Studio rejected Instance change: " ..
+                tostring(changeError):sub(1, 170))
+            return
+        end
+        ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Commit)
+        reportSceneOutcome(pending, "applied", "Instance action applied in Studio. Undo is available; re-inspect to verify.")
     end)
 end)
 

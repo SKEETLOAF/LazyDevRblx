@@ -45,13 +45,20 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.3.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.4.0' });
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/inspect') {
         return send(res, 201, state.inspect(await readJson(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/inspect-tree') {
         return send(res, 201, state.inspectStructure(await readJson(req)));
+      }
+      if (req.method === 'GET' && url.pathname === '/v1/studio/scene/pending') {
+        return send(res, 200, { proposal: state.pendingScene(url.searchParams.get('structureId')) });
+      }
+      const sceneDecision = /^\/v1\/studio\/scene\/proposals\/([^/]+)\/decision$/.exec(url.pathname);
+      if (req.method === 'POST' && sceneDecision) {
+        return send(res, 200, state.finishSceneAction(sceneDecision[1], await readJson(req)));
       }
       if (req.method === 'GET' && url.pathname === '/v1/studio/pending') {
         return send(res, 200, { proposal: state.pendingFor(url.searchParams.get('instanceId')) });
