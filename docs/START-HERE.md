@@ -6,9 +6,10 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 
 1. [Product vision](vision/PRODUCT-VISION.md): What this is, whom it serves, and what must stay true.
 2. [Decision log](decisions/DECISION-LOG.md): Accepted constraints, proposals, open questions, and superseded ideas.
-3. [Architecture](architecture/SYSTEM-ARCHITECTURE.md): Agents, local bridge, Studio plugin, desktop observer, capabilities, trust boundaries.
-4. [Development roadmap](planning/SKELETON-FLESH-SKIN-ROADMAP.md): Sequence and V0 acceptance tests.
-5. [Research and integrations](research/TOOL-AND-REFERENCE-STRATEGY.md): How to evaluate software and sources without overclaiming compatibility.
+3. [Executable V0 README](../README.md): What has been implemented, how to run it, and what has **not** been tested.
+4. [Studio verification checklist](V0-INTEGRATION-CHECKLIST.md): Manual integration tests that remain open.
+
+Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
 
 ## Source-of-truth rules
 
@@ -23,13 +24,12 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 ## Documentation categories
 
 - `vision/`: Problem, audience, quality bar, product identity.
-- `planning/`: Milestones, acceptance criteria, backlog and phased work.
-- `research/`: References, technical evidence, alternatives, constraints.
-- `architecture/`: Interfaces, security, data schemas and implementation designs.
 - `decisions/`: Binding decisions and their rationale.
+- `V0-INTEGRATION-CHECKLIST.md`: Unverified Studio integration gates.
+- `planning/`, `research/`, `architecture/`: Reserved for future work; not present as of V0.
 
 ## Updating these files
 
 When new evidence or testing changes a conclusion, record the evidence, update the affected decision and cross-references, and leave a brief note indicating what was superseded. Keep unresolved assumptions visible.
 
-**Design status:** Initial proposal and approved direction synthesized from development conversations. **Build status:** Repository foundation only, not a working Studio integration.
+**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** Node bridge implementation and Node tests exist; Studio integration is unverified.
