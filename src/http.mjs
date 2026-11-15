@@ -3,6 +3,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { InputError } from './state.mjs';
 import { handleRpc } from './mcp.mjs';
 import { VIEWPORT_MAX_BYTES, VIEWPORT_MAX_WIDTH, VIEWPORT_MAX_HEIGHT } from './viewport.mjs';
+import { MEDIA_MAX_BYTES } from './reference-media.mjs';
 
 const BODY_LIMIT = 350 * 1024;
 
@@ -11,6 +12,29 @@ function send(response, status, body) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   response.end(json);
+}
+
+async function readReferenceUpload(request) {
+  const mediaType = request.headers['content-type']?.toLowerCase();
+  if(!['image/png','image/jpeg','image/webp','image/gif'].includes(mediaType)){
+    throw new InputError('PNG, JPEG, WebP or GIF Content-Type required',415);
+  }
+  const encodedLabel=request.headers['x-reference-label'];
+  if(typeof encodedLabel!=='string'||encodedLabel.length>180||
+     !/^[A-Za-z0-9_-]+$/.test(encodedLabel)){
+    throw new InputError('Invalid encoded reference label');
+  }
+  const label=Buffer.from(encodedLabel,'base64url').toString('utf8');
+  if(Buffer.from(label,'utf8').toString('base64url')!==encodedLabel){
+    throw new InputError('Invalid reference label UTF-8');
+  }
+  let size=0;const chunks=[];
+  for await(const chunk of request){
+    size+=chunk.length;
+    if(size>MEDIA_MAX_BYTES) throw new InputError('Reference file exceeds 8 MiB limit',413);
+    chunks.push(chunk);
+  }
+  return {bytes:Buffer.concat(chunks),options:{label,mediaType}};
 }
 
 async function readViewportPixels(request) {
@@ -86,7 +110,11 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.8.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.9.0' });
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/references/import') {
+        const {bytes,options}=await readReferenceUpload(req);
+        return send(res,201,state.ingestReference(bytes,options));
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/specialist/sine') {
         return send(res, 201, state.inspectSine(await readJson(req)));

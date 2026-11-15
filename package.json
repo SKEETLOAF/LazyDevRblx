@@ -1,6 +1,6 @@
 {
   "name": "lazy-devkit",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned Roblox Studio inspection, review and visual evidence bridge",
@@ -13,6 +13,7 @@
     "session": "node scripts/show-session.mjs",
     "mcp:direct": "node src/main.mjs",
     "mcp:client": "node src/stdio-client.mjs",
-    "native:mcp:check": "node scripts/check-native-mcp.mjs"
+    "native:mcp:check": "node scripts/check-native-mcp.mjs",
+    "reference:import": "node scripts/import-reference.mjs"
   }
 }

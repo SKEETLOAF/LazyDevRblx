@@ -1,15 +1,18 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.8 adds opt-in Sine VFX runtime inspection and a read-only official Studio MCP coexistence check. It remains experimental and does not control third-party editor windows.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.9 adds user-imported image/GIF references, frame timing analysis, a visual-quality evidence layer, and measured comparisons with Studio viewport captures. It remains experimental, not a reference-to-source decompiler.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V0.8
+## What is implemented in V0.9
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
-- Dependency-free Node.js stdio MCP server with seventeen tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Dependency-free Node.js stdio MCP server with twenty tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **Visual and animated references:** user-chosen local PNG, GIF, JPEG and WebP files are explicitly imported via `npm run reference:import -- "path/to/file.gif" --label "Impact reference"`. The local bridge can inspect image dimensions, samples, GIF frame durations and top visual-change beats. GIFs expose up to 3 real composited PNG keyframes; JPEG/WebP are returned as original images without claiming pixel metrics in this dependency-free implementation.
+- **Measured quality evidence:** color palette buckets, sampled luminance/contrast/saturation, alpha coverage, local edge density and GIF frame-to-frame changes. `lazydev_compare_reference_viewport` reports **numeric** differences between a user-imported PNG/GIF frame and an explicitly approved Studio image, never a single objective quality score or asserted camera alignment.
+- **Reference deconstruction workflow:** [Reference analysis and quality rubric](docs/PHASE-8-REFERENCES-AND-QUALITY.md) and [reference-review skill](skills/reference-review/SKILL.md) guide a vision-capable AI to distinguish visually observed layout/layers/timing from inferred implementation, and prioritize improvements against an approved creative target.
 - **Sine VFX runtime integration evidence:** inspect `ReplicatedStorage.SineVFX` and one selected Instance's tags/`Properties` folder without requiring plugin code or copying source. Preview locally before sharing; read from MCP with `lazydev_list_sine_inspections` and `lazydev_read_sine_inspection`. This does **not** control Sine's editor, transform effects, or invoke the client's runtime.
 - **Official Roblox Studio MCP coexistence:** `npm run native:mcp:check` is a local, read-only check for an official Studio MCP launcher and optional host config file. It does not read config contents, register servers or prove connection. Native Studio MCP should be connected independently when its broader tools are needed.
 - **User-reviewed viewport frames:** an explicit StudioCaptureService screenshot permission prompt, local ImageLabel/EditableImage preview, and a separate Share action for the **same RGBA frame**. The daemon converts the pixels to PNG and returns actual image content via `lazydev_read_viewport`. The frame is downscaled to at most 480×300 pixels, bounded in memory, not a continuous stream, and is not a screenshot of the entire desktop.
@@ -112,10 +115,25 @@ See [Phase 6 viewport observation](docs/PHASE-6-VIEWPORT-OBSERVATION.md) for API
 
 See [Phase 7 Sine and native MCP](docs/PHASE-7-SINE-AND-NATIVE-MCP.md) for exact documented interfaces, design boundaries and verification.
 
+## Reference images, GIFs, and visual review (V0.9, Node-tested)
+
+1. Start the local bridge (`npm start`) after updating the repo. Explicitly import one PNG/JPEG/WebP/GIF file already on **your PC**:
+   ```powershell
+   npm run reference:import -- "C:\\path\\to\\effect.gif" --label "Effect reference"
+   ```
+   The CLI reads *only the named file* (max 8 MiB). Do not paste bridge tokens or ask an agent to scan your files. The upload goes to the authenticated `127.0.0.1` bridge, not a public server.
+2. In an MCP client call `lazydev_list_references`, then `lazydev_read_reference` using the returned `referenceId`. A vision-capable client receives image content; for GIFs, three keyframes at most, including the biggest observed visual change. Frame timing and visual measurements accompany the images.
+3. With a separately user-shared Studio capture from v0.7, call `lazydev_compare_reference_viewport` with its `viewportId` and the imported `referenceId`, optionally specifying a GIF `frameIndex`.
+4. Interpret differences relative to the requested style, silhouette and action. The numbers are proxies, **not** proof of fidelity, gameplay quality, rendering performance, or original construction methods. Provide human-readable deconstruction and a shortlist of changes, marking source reconstruction as inference.
+5. This version supports **local file import**, not an automatic ChatGPT attachment downloader or unrestricted filesystem tool. References live in the bridge's memory (up to six) and vanish on restart. The AI client may retain shared images under its own data settings.
+
+See [Phase 8 reference analysis](docs/PHASE-8-REFERENCES-AND-QUALITY.md) for formats, decode budgets and what quality measures mean.
+
 ## Safety and limitations
 
 - The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
 - Localhost is **not** automatically trustworthy. A separate bearer token protects every HTTP route and browser-origin requests are rejected; a local process with the token still has the session's privileges. Do not bind this service to a public interface.
+- Reference images are imported only via an explicit local CLI command; the MCP tools cannot open arbitrary paths or fetch URLs. Local source bytes stay in ephemeral bridge memory and are sent to the connected MCP client only when read.
 - Sine inspections share only optional selected Instance metadata, not runtime ModuleScript source; they never call Sine functions or change the editor. The separate native Studio MCP may have powerful mutating tools, subject to its own permissions.
 - Screenshot capture is entirely opt-in, requires Studio screenshot permission and a local preview, and shares a bounded image only after a separate click. The daemon stores at most four PNGs in memory until restart; it never records the desktop or runs background capture.
 - Play/Run testing executes your existing game scripts. It may trigger external operations, DataStore writes, or other side effects; opt in only with a disposable place and safe test data. The test service returning does not certify behavior.
@@ -130,6 +148,6 @@ See [Phase 7 Sine and native MCP](docs/PHASE-7-SINE-AND-NATIVE-MCP.md) for exact
 
 ## Next evidence gates
 
-Validate V0.4 scene actions, V0.5 Output sharing, V0.6 test launch/reporting, V0.7 screenshots and V0.8 Sine inspection in real Windows Studio. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
+Validate V0.4 scene actions, V0.5 Output sharing, V0.6 test launch/reporting, V0.7 screenshots and V0.8 Sine inspection in real Windows Studio. V0.9 local media decoding and measurement are Node-tested; verify actual host image rendering and quality-review workflow with a human-approved reference. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.

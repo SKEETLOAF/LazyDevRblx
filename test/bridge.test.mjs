@@ -94,5 +94,5 @@ test('stdio parser accepts newline-delimited MCP and reserves stdout for JSON-RP
   const lines = raw.trim().split('\n').map(line => JSON.parse(line));
   assert.deepEqual(lines.map(line => line.id), [7,8]);
   assert.equal(lines[0].result.protocolVersion, '2025-11-25');
-  assert.equal(lines[1].result.tools.length, 17);
+  assert.equal(lines[1].result.tools.length, 20);
 });

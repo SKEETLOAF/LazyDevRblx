@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.8 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.9 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -99,6 +99,19 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Status remains `module_present` rather than a claimed functional VFX success; replant and client runtime behavior need independent testing.
 - [ ] `npm run native:mcp:check` detects the native launcher on Windows without parsing host secrets or claiming a connection.
 - [ ] When native Studio MCP and LAZY DevKit are both installed, they do not compete for the same process/port or register duplicate `Roblox_Studio` servers.
+
+## V0.9 image/GIF and quality-analysis verification (not yet end-to-end verified on user's PC)
+
+- [ ] A user-supplied local PNG can be explicitly imported without giving MCP clients filesystem read permissions.
+- [ ] A two-frame animated GIF imports with accurate frame durations, order, frame compositing, and exact observed peak-change position.
+- [ ] Local JPEG and WebP imports return valid original images but clearly report `quantitativeAvailable=false`.
+- [ ] Oversized, corrupt, mismatched-MIME, and excessive-frame files are rejected before being retained.
+- [ ] MCP `lazydev_read_reference` returns actual image content and measured statistics; no arbitrary image source was hallucinated.
+- [ ] At most three GIF keyframe samples are present, including first, largest-change frame, and last (when distinct).
+- [ ] `lazydev_compare_reference_viewport` uses a separately approved Studio viewport capture; labels differences as unaligned measured proxies, not proof of quality.
+- [ ] User/agent reference deconstruction separates observed elements, likely implementation choices, unknowns, quality criteria, and revisions.
+- [ ] Restarting the local daemon expires imported references; secrets and local file paths are not exposed in tool results.
+- [ ] Measure edge/readability behavior at real Roblox viewing scale and record human judgment separately from automatic metrics.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 

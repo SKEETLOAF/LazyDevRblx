@@ -59,6 +59,10 @@ Do not require a paid Eclipse, Moon, Sine or other plugin. These can act as opti
 
 One main coordinator, small deterministic actions, event-driven captures, task-relevant context retrieval, finite retries, explicit permissions, user-visible state, and an emergency stop for desktop control. Supported AI clients bring their own accounts, credentials and quotas. Do not bypass provider limits or service rules.
 
+## References and evidence-based quality
+
+Use opt-in still-image and animation references as examples of visual principles, not instructions to clone a protected production asset. Deconstruct observable layering, silhouette, palette, lighting, camera, timing and effect rhythms, and propose implementation hypotheses marked as such. Verify the finished project in its own gameplay context. Separate quantitative characteristics from a developer-approved artistic rubric; numerical similarity does not guarantee quality.
+
 ## Quality bar
 
 A workflow counts as complete only when the system can substantiate what it did and what it verified. Correct structure does not automatically mean good visuals. Beautiful screenshots do not automatically mean functioning gameplay. When a review requires a human artistic choice, show the trade-off rather than invent an objective verdict.
