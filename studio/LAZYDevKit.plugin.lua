@@ -1,4 +1,4 @@
--- LAZY DevKit Studio review panel (V0.6 experimental; script, scene, Output, test reports).
+-- LAZY DevKit Studio review panel (V0.7 experimental; script, scene, Output, test reports, viewport).
 -- Install as a local Studio plugin Script. Never paste a session token into game scripts.
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
@@ -6,6 +6,8 @@ local ScriptEditorService = game:GetService("ScriptEditorService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local LogService = game:GetService("LogService")
 local StudioTestService = game:GetService("StudioTestService")
+local StudioCaptureService = game:GetService("StudioCaptureService")
+local AssetService = game:GetService("AssetService")
 
 local BRIDGE = "http://127.0.0.1:43187"
 local MAX_SOURCE_BYTES = 128 * 1024
@@ -17,6 +19,7 @@ local trackedStructure = nil
 local sceneProposal = nil
 local diagnosticsPreview = nil
 local playtestPreview = nil
+local viewportPreview = nil
 local playtestInProgress = false
 local busy = false
 
@@ -92,6 +95,19 @@ end
 
 addLabel("Local bridge at 127.0.0.1:43187. Paste the one-session token printed by the Node bridge. No automatic polling or editing.", 52)
 local tokenBox = addBox("Paste one-session token here", 35, true)
+addLabel("Viewport capture: explicit permission, local preview, then manual Share.", 32)
+local viewportCaptureButton = addButton("Capture & preview current 3D viewport")
+local viewportInfoLabel = addLabel("No viewport frame captured.", 44)
+local viewportImage = Instance.new("ImageLabel")
+viewportImage.Name = "ViewportPreview"
+viewportImage.Size = UDim2.new(1, -18, 0, 260)
+viewportImage.BackgroundColor3 = Color3.fromRGB(18, 20, 24)
+viewportImage.BorderSizePixel = 0
+viewportImage.ScaleType = Enum.ScaleType.Fit
+viewportImage.ImageContent = Content.none
+viewportImage.Parent = panel
+local viewportShareButton = addButton("Share previewed viewport image with MCP")
+local viewportDiscardButton = addButton("Discard local viewport frame")
 local diagnosticsPreviewButton = addButton("Preview Studio Output warnings/errors locally")
 local diagnosticsInfoLabel = addLabel("Output has not been previewed or shared.", 56)
 local diagnosticsBox = addBox("No warnings/errors previewed", 160, false)
@@ -153,6 +169,124 @@ local function safeAction(callback)
     busy = false
     if not ok then setStatus("Operation failed: " .. tostring(err)) end
 end
+
+local function clearViewportPreview()
+    viewportPreview = nil
+    viewportImage.ImageContent = Content.none
+end
+
+local function waitForCapture(capture)
+    -- BufferStatus is populated asynchronously; never call GetBuffer until
+    -- ready. A bounded wait avoids hanging the Studio plugin indefinitely.
+    for _ = 1, 120 do
+        if capture.BufferStatus == Enum.StudioCaptureBufferStatus.Ready then
+            return
+        end
+        if capture.BufferStatus == Enum.StudioCaptureBufferStatus.Error then
+            error("Viewport capture failed. Check screenshot permission and active place.")
+        end
+        task.wait(0.1)
+    end
+    error("Viewport capture timed out; nothing was shared")
+end
+
+viewportCaptureButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        clearViewportPreview()
+        local granted = StudioCaptureService:RequestScreenshotPermissionAsync()
+        if not granted then
+            error("Screenshot permission was denied or globally disabled")
+        end
+        if not StudioCaptureService:CanCaptureScreenshot() then
+            error("Cannot capture this Studio 3D viewport right now")
+        end
+        local capture = StudioCaptureService:CaptureScreenshot({
+            Format = Enum.StudioCaptureScreenshotFormat.RGBA8,
+            UICaptureMode = Enum.UICaptureMode.All,
+        })
+        waitForCapture(capture)
+        local original = capture.Resolution
+        if original.X <= 0 or original.Y <= 0 then
+            error("Studio returned invalid screenshot dimensions")
+        end
+        local scale = math.min(1, 480 / original.X, 300 / original.Y)
+        if scale < 1 then
+            local outputSize = Vector2.new(
+                math.max(1, math.floor(original.X * scale)),
+                math.max(1, math.floor(original.Y * scale)))
+            capture = capture:ScaleAsync(Enum.ResamplerMode.Default, outputSize)
+            waitForCapture(capture)
+        end
+        local resolution = capture.Resolution
+        local width, height = resolution.X, resolution.Y
+        if width < 1 or height < 1 or width > 480 or height > 300 or
+            width % 1 ~= 0 or height % 1 ~= 0 then
+            error("Unsupported screenshot size")
+        end
+        local pixels = capture:GetBuffer()
+        if buffer.len(pixels) ~= width * height * 4 then
+            error("Screenshot RGBA buffer has an unexpected length")
+        end
+        -- A local, exact-pixel visual preview is mandatory. If EditableImage
+        -- is not allowed on this Studio build, nothing becomes shareable.
+        local previewImage = AssetService:CreateEditableImage({Size = resolution})
+        if not previewImage then
+            error("Cannot create local image preview; frame was not shared")
+        end
+        previewImage:WritePixelsBuffer(Vector2.zero, resolution, pixels)
+        viewportImage.ImageContent = Content.fromObject(previewImage)
+        viewportPreview = {
+            pixels = pixels, width = width, height = height, image = previewImage,
+            capturedTimestamp = os.time(),
+        }
+        viewportInfoLabel.Text = "Local preview: " .. width .. "x" .. height ..
+            " pixels. No image has been shared."
+        setStatus("Inspect this exact screenshot carefully. Click Share only if approved; " ..
+            "the image may contain private in-game UI text.")
+    end)
+end)
+
+viewportShareButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if not viewportPreview then error("Capture and preview a viewport frame first") end
+        if #tokenBox.Text < 16 then
+            error("Enter the private bridge session token")
+        end
+        local snapshot = viewportPreview
+        -- Consume the captured frame before the request: a slow or failed
+        -- network receipt must not accidentally submit the same pixels twice.
+        clearViewportPreview()
+        local response = HttpService:RequestAsync({
+            Url = BRIDGE .. "/v1/studio/viewport",
+            Method = "POST",
+            Headers = {
+                Authorization = "Bearer " .. tokenBox.Text,
+                ["Content-Type"] = "application/octet-stream",
+                ["X-Viewport-Width"] = tostring(snapshot.width),
+                ["X-Viewport-Height"] = tostring(snapshot.height),
+                ["X-Viewport-Captured-At"] = tostring(snapshot.capturedTimestamp),
+            },
+            Body = buffer.tostring(snapshot.pixels),
+        })
+        local data = HttpService:JSONDecode(response.Body)
+        if not response.Success then
+            error("Viewport bridge HTTP " .. tostring(response.StatusCode) ..
+                ": " .. tostring(data.error))
+        end
+        viewportInfoLabel.Text = "Shared " .. data.width .. "x" .. data.height ..
+            " 3D viewport image, ID " .. data.viewportId
+        setStatus("A frozen viewport image was shared. Ask the agent to call " ..
+            "lazydev_list_viewports then lazydev_read_viewport. This is not live video.")
+    end)
+end)
+
+viewportDiscardButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        clearViewportPreview()
+        viewportInfoLabel.Text = "Local viewport capture discarded. Nothing shared."
+        setStatus("Viewport image discarded.")
+    end)
+end)
 
 showButton.Click:Connect(function()
     widget.Enabled = not widget.Enabled

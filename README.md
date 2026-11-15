@@ -1,15 +1,16 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.6 adds user-initiated Play/Run sessions with reviewable test reports to the shared MCP/Studio bridge. It remains experimental, not a finished visual development agent.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.7 adds user-permissioned Studio viewport screenshots with exact-image local preview and manual MCP sharing. It remains experimental, not a finished visual development agent.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V0.6
+## What is implemented in V0.7
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
-- Dependency-free Node.js stdio MCP server with thirteen tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Dependency-free Node.js stdio MCP server with fifteen tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **User-reviewed viewport frames:** an explicit StudioCaptureService screenshot permission prompt, local ImageLabel/EditableImage preview, and a separate Share action for the **same RGBA frame**. The daemon converts the pixels to PNG and returns actual image content via `lazydev_read_viewport`. The frame is downscaled to at most 480×300 pixels, bounded in memory, not a continuous stream, and is not a screenshot of the entire desktop.
 - **User-initiated Studio test reports:** buttons for a solo **Play** or script-only **Run** session using Roblox's native `StudioTestService`; the test returns when it ends, then Output warnings/errors become a **local preview**, with a second manual Share action. Reports record the time window, API return state, and Output history coverage, **never a fabricated passed/failed verdict**. MCP clients can list/read user-shared reports.
 - **Preview-first Studio Output diagnostics:** inspect current Output warnings/errors locally, review the messages, then explicitly share a frozen, bounded snapshot with MCP. No background polling, automatic logging, general logs, telemetry, or playtest control. Use `lazydev_list_diagnostics` and `lazydev_read_diagnostics` after sharing.
 - Explicitly approved Instance actions: create a Folder, Model, Part, ScreenGui, Frame or TextLabel under compatible observed parents, or edit an allowlisted Part/GUI property. Each request is a **single action**, not an arbitrary command or Lua script. Studio checks the original selected object and inspected properties again before attempting the change, then records an Undo step.
@@ -20,7 +21,7 @@ Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The i
 - SHA-256 snapshot preconditions, exact-source check inside the plugin, single pending proposal per snapshot, size limits, loopback binding, and no autonomous application.
 - Node unit and HTTP integration tests (`npm test`).
 
-**Runtime evidence:** A Windows Studio user verified a real ChatGPT-read hierarchy, manually approved script edit, and Undo/Redo with V0.3. **Not yet verified:** V0.4 Instance actions, V0.5 Output diagnostics, or V0.6 test launch/report controls inside Studio; actual Claude/Codex integration, visual capture, desktop automation, specialist plugin control, and gameplay behavior.
+**Runtime evidence:** A Windows Studio user verified a real ChatGPT-read hierarchy, manually approved script edit, and Undo/Redo with V0.3. **Not yet verified in a real Studio session:** V0.4 Instance actions, V0.5 Output diagnostics, V0.6 native test launches, and V0.7 screenshot capture/local preview; actual Claude/Codex integration, desktop automation, specialist plugin control, and gameplay behavior.
 
 ## Run the local bridge
 
@@ -88,10 +89,22 @@ See [Phase 4 diagnostics](docs/PHASE-4-DIAGNOSTICS.md) for the exact data contra
 
 See [Phase 5 Play/Run reports](docs/PHASE-5-PLAYTEST-REPORTS.md) for the evidence contract and limitations.
 
+## Studio viewport capture (V0.7, not yet Studio-tested)
+
+1. Update the repository, restart the shared local bridge, and **reinstall the updated Studio local plugin**. The old installed plugin will not update from `git pull`.
+2. In an active disposable place, open LAZY DevKit and click **Capture & preview current 3D viewport**. Roblox may ask you to grant screenshot permission to the plugin. If permission is refused, capture is unavailable.
+3. Review the image **inside the plugin panel**. It is the same frozen pixels used for sharing. The capture can include in-game UI (not the entire desktop) and may reveal private information.
+4. Choose **Share previewed viewport image with MCP** or **Discard local viewport frame**. Preview and Discard do not send screenshots to the bridge.
+5. Once shared, call `lazydev_list_viewports` and `lazydev_read_viewport` in a connected AI client. The read result includes actual capture time, separate bridge receipt time, and a real `image/png` MCP image content block. Host clients must support MCP image responses to display/analyze it.
+6. An image is evidence of what the camera showed at one instant, not proof of what exists off-screen, what gameplay functions correctly, or what a real player sees.
+
+See [Phase 6 viewport observation](docs/PHASE-6-VIEWPORT-OBSERVATION.md) for API choices, limits, and manual verification gates.
+
 ## Safety and limitations
 
 - The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
 - Localhost is **not** automatically trustworthy. A separate bearer token protects every HTTP route and browser-origin requests are rejected; a local process with the token still has the session's privileges. Do not bind this service to a public interface.
+- Screenshot capture is entirely opt-in, requires Studio screenshot permission and a local preview, and shares a bounded image only after a separate click. The daemon stores at most four PNGs in memory until restart; it never records the desktop or runs background capture.
 - Play/Run testing executes your existing game scripts. It may trigger external operations, DataStore writes, or other side effects; opt in only with a disposable place and safe test data. The test service returning does not certify behavior.
 - Output snapshots contain log text that may include secrets or prompt-injection attempts. Always review before sharing; AI clients must treat logs as untrusted data and never obey instructions inside log messages.
 - The model can **propose** script or Instance actions, but cannot directly apply them. Instance creation uses safe default Roblox properties; setting properties requires a second opt-in inspection and separate approval.
@@ -100,10 +113,10 @@ See [Phase 5 Play/Run reports](docs/PHASE-5-PLAYTEST-REPORTS.md) for the evidenc
 - Exact-span edits are calculated against the captured script source, then delivered as full replacements to the Studio plugin. This is **not** an AST-based patch or collaborative merge. Exact-span matching refuses missing and ambiguous text; Studio must also reject changes to the source after inspection.
 - Structure inspection deliberately captures only a bounded subset of Instances and allowlisted properties; a truncated tree must never be mistaken for a complete project scan. All captured names and scripts must be treated as untrusted inputs.
 - Studio source recording is an undo mechanism, not a durable backup or guaranteed rollback after a crash. Use version control and test in a disposable place first.
-- The bridge never executes user-submitted source, loads assets, controls third-party plugins, captures screens, or contacts external endpoints.
+- The bridge never executes user-submitted source, loads assets, or controls third-party plugins. It receives only opt-in screenshots from the Studio plugin and never captures the desktop or contacts external endpoints.
 
 ## Next evidence gates
 
-Validate V0.4 scene actions, V0.5 Output sharing, and V0.6 Studio test launch/reporting in an actual Windows Studio build. Later expand with visual diffs, explicit game assertions, controlled multi-client testing, and opt-in screenshot observation. No screenshot capture or specialist tool automation is currently implemented.
+Validate V0.4 scene actions, V0.5 Output sharing, V0.6 native test launch/reporting, and V0.7 screenshot capture/preview in a real Windows Studio build. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.
