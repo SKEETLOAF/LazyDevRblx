@@ -5,6 +5,7 @@ import { DiagnosticsStore, DiagnosticInputError } from './diagnostics.mjs';
 import { PlaytestStore, PlaytestInputError } from './playtests.mjs';
 import { ViewportStore, ViewportInputError } from './viewport.mjs';
 import { SineStore, SineInputError } from './sine.mjs';
+import { ReferenceStore, ReferenceInputError } from './references.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -41,6 +42,7 @@ export class DevKitState {
     this.playtests = new PlaytestStore();
     this.viewports = new ViewportStore();
     this.sine = new SineStore();
+    this.references = new ReferenceStore();
   }
 
   inspect(input) {
@@ -164,6 +166,37 @@ export class DevKitState {
     try { return this.sine.read(requireString(id,'sineId',100)); }
     catch(error) {
       if(error instanceof SineInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  ingestReference(bytes,options) {
+    try { return this.references.ingest(bytes,options); }
+    catch(error) {
+      if(error instanceof ReferenceInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  listReferences() { return this.references.list(); }
+
+  readReference(id) {
+    try { return this.references.read(requireString(id,'referenceId',100)); }
+    catch(error) {
+      if(error instanceof ReferenceInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  compareReferenceViewport(args) {
+    try {
+      return this.references.compare(
+        requireString(args.referenceId,'referenceId',100),
+        requireString(args.viewportId,'viewportId',100),
+        this.viewports, {frameIndex:args.frameIndex ?? null});
+    } catch(error) {
+      if(error instanceof ReferenceInputError) throw new InputError(error.message,error.status);
+      if(error instanceof ViewportInputError) throw new InputError(error.message,error.status);
       throw error;
     }
   }

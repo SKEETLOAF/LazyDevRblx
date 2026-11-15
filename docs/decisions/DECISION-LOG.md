@@ -36,6 +36,9 @@
 | D-023 | Proposed; experimentally implemented | Sine interoperability starts with opt-in inspection of planted `ReplicatedStorage.SineVFX` and selected object's tags/`Properties` folder. Official Sine docs describe `shared.sv` as a **client runtime** interface, not Studio plugin editor automation; do not call it from the DevKit plugin or claim control of editor windows. |
 | D-024 | Accepted direction; experimental preflight | Prefer Roblox's official built-in Studio MCP for native scene/animation/playtest operations, keeping DevKit as a separate review/specialist adapter. The offline preflight may inspect local file presence but never install, register, execute native MCP, read host settings, or infer active connectivity. |
 
+| D-025 | Proposed; implemented experimentally in V0.9 | User explicitly imports local PNG/JPEG/WebP/GIF references into an authenticated in-memory bridge. Vision-capable agents receive real images/GIF keyframes and quantized visual/timing measurements. No arbitrary agent-side file reads, URL fetching, or third-party model training pipeline. |
+| D-026 | Accepted direction; implemented as limited evidence | Evaluate reference fidelity and game art quality on separate measurable and judgmental dimensions. Contrast/palette/edges/timing statistics are descriptive proxies, **not objective aesthetic scores**. Visual deconstruction reconstructs plausible layers and processes rather than falsely recovering original rig/animation/VFX source files. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.
