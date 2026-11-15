@@ -131,7 +131,7 @@ test('MCP image is returned by shared stdio relay without dropping pixels', asyn
   const {attachStdioRelay}=await import('../src/relay.mjs');
   const state=new DevKitState();
   const meta=state.inspectViewport({pixels:small,width:2,height:2});
-  const {server,token}=createStudioServer(state,{token:'v'.repeat(64)});
+  const {server,token}=createStudioServer(state,{token:'a'.repeat(64)});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   t.after(()=>new Promise(resolve=>server.close(resolve)));
   const dir=mkdtempSync(join(tmpdir(),'lazy-devkit-viewport-'));
