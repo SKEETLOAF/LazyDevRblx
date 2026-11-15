@@ -39,6 +39,8 @@
 | D-025 | Proposed; implemented experimentally in V0.9 | User explicitly imports local PNG/JPEG/WebP/GIF references into an authenticated in-memory bridge. Vision-capable agents receive real images/GIF keyframes and quantized visual/timing measurements. No arbitrary agent-side file reads, URL fetching, or third-party model training pipeline. |
 | D-026 | Accepted direction; implemented as limited evidence | Evaluate reference fidelity and game art quality on separate measurable and judgmental dimensions. Contrast/palette/edges/timing statistics are descriptive proxies, **not objective aesthetic scores**. Visual deconstruction reconstructs plausible layers and processes rather than falsely recovering original rig/animation/VFX source files. |
 
+| D-027 | Accepted direction; experimentally implemented in V1.0 | Visual motion observation should use bounded user-started Studio screenshot sequences, local review of every frame and one explicit share. Record actual capture-request offsets, not promised frame rate. Compare to imported GIFs using normalized time and measured image evidence, never fabricated event alignment or quality grades. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

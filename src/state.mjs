@@ -6,6 +6,7 @@ import { PlaytestStore, PlaytestInputError } from './playtests.mjs';
 import { ViewportStore, ViewportInputError } from './viewport.mjs';
 import { SineStore, SineInputError } from './sine.mjs';
 import { ReferenceStore, ReferenceInputError } from './references.mjs';
+import { SequenceStore, SequenceInputError } from './sequences.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -43,6 +44,7 @@ export class DevKitState {
     this.viewports = new ViewportStore();
     this.sine = new SineStore();
     this.references = new ReferenceStore();
+    this.sequences = new SequenceStore();
   }
 
   inspect(input) {
@@ -197,6 +199,36 @@ export class DevKitState {
     } catch(error) {
       if(error instanceof ReferenceInputError) throw new InputError(error.message,error.status);
       if(error instanceof ViewportInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  inspectSequence(input) {
+    try { return this.sequences.inspect(input); }
+    catch(error) {
+      if(error instanceof SequenceInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  listSequences() { return this.sequences.list(); }
+
+  readSequence(id) {
+    try { return this.sequences.read(requireString(id,'sequenceId',100)); }
+    catch(error) {
+      if(error instanceof SequenceInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  compareSequenceReference(input) {
+    try {
+      return this.sequences.compare(this.references,
+        requireString(input.referenceId,'referenceId',100),
+        requireString(input.sequenceId,'sequenceId',100));
+    } catch(error) {
+      if(error instanceof SequenceInputError) throw new InputError(error.message,error.status);
+      if(error instanceof ReferenceInputError) throw new InputError(error.message,error.status);
       throw error;
     }
   }

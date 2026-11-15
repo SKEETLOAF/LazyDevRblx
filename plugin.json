@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lazy-devkit",
-  "version": "0.9.0",
-  "description": "Opt-in Roblox Studio evidence, reviewed edits, specialist-tool observations, and still-image/GIF reference analysis.",
+  "version": "1.0.0",
+  "description": "Permissioned Roblox Studio development bridge with reviewed edits, sampled visual sequences, GIF reference analysis and specialist evidence.",
   "repository": "https://github.com/SKEETLOAF/LazyDevRblx",
   "extensions": {
     "com.openai": {

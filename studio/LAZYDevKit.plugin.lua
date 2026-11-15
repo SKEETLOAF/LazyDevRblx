@@ -1,4 +1,4 @@
--- LAZY DevKit Studio review panel (V0.8 experimental; reviewed script, scene, Output, viewport, Sine observations).
+-- LAZY DevKit Studio review panel (V1.0 experimental; reviewed script/scene, viewport sequence and references).
 -- Install as a local Studio plugin Script. Never paste a session token into game scripts.
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
@@ -21,6 +21,12 @@ local sceneProposal = nil
 local diagnosticsPreview = nil
 local playtestPreview = nil
 local viewportPreview = nil
+local sequencePreview = nil
+local sequenceRecording = false
+local sequenceCancel = false
+local sequenceIndex = 1
+local sequencePreviewImage = nil
+local sequenceSeen = {}
 local sinePreview = nil
 local playtestInProgress = false
 local busy = false
@@ -116,6 +122,21 @@ viewportImage.ImageContent = Content.none
 viewportImage.Parent = panel
 local viewportShareButton = addButton("Share previewed viewport image with MCP")
 local viewportDiscardButton = addButton("Discard local viewport frame")
+addLabel("Timed viewport: six sequential frames, about 0.5 seconds apart; not continuous video.", 34)
+local sequenceCaptureButton = addButton("Capture 6-frame viewport sequence (manual start)")
+local sequenceInfoLabel = addLabel("No viewport sequence recorded.", 52)
+local sequenceImage = Instance.new("ImageLabel")
+sequenceImage.Name = "SequenceFramePreview"
+sequenceImage.Size = UDim2.new(1, -18, 0, 200)
+sequenceImage.BackgroundColor3 = Color3.fromRGB(18, 20, 24)
+sequenceImage.BorderSizePixel = 0
+sequenceImage.ScaleType = Enum.ScaleType.Fit
+sequenceImage.ImageContent = Content.none
+sequenceImage.Parent = panel
+local sequencePreviousButton = addButton("Review previous sequence frame")
+local sequenceNextButton = addButton("Review next sequence frame")
+local sequenceShareButton = addButton("Share entire reviewed sequence with MCP")
+local sequenceDiscardButton = addButton("Cancel capture / Discard local sequence")
 local diagnosticsPreviewButton = addButton("Preview Studio Output warnings/errors locally")
 local diagnosticsInfoLabel = addLabel("Output has not been previewed or shared.", 56)
 local diagnosticsBox = addBox("No warnings/errors previewed", 160, false)
@@ -294,6 +315,204 @@ viewportDiscardButton.MouseButton1Click:Connect(function()
         viewportInfoLabel.Text = "Local viewport capture discarded. Nothing shared."
         setStatus("Viewport image discarded.")
     end)
+end)
+
+-- Time samples use the capture-request clock, not a claimed video frame
+-- rate. All six sampled images must be viewed before one explicit Share.
+local SEQUENCE_FRAMES = 6
+local SEQUENCE_GAP_SECONDS = 0.5
+local SEQUENCE_MAX_W = 240
+local SEQUENCE_MAX_H = 160
+
+local function clearSequence()
+    sequencePreview = nil
+    sequenceIndex = 1
+    sequenceSeen = {}
+    sequencePreviewImage = nil
+    sequenceImage.ImageContent = Content.none
+end
+
+local function showSequenceFrame(index)
+    if not sequencePreview then error("Capture a sequence first") end
+    if index < 1 or index > #sequencePreview.frames then error("No such frame") end
+    local frame = sequencePreview.frames[index]
+    local size = Vector2.new(frame.width, frame.height)
+    local preview = AssetService:CreateEditableImage({ Size = size })
+    if not preview then error("Cannot create an exact local preview of this frame") end
+    preview:WritePixelsBuffer(Vector2.zero, size, frame.pixels)
+    sequenceImage.ImageContent = Content.fromObject(preview)
+    sequencePreviewImage = preview
+    sequenceIndex = index
+    sequenceSeen[index] = true
+    local seenCount = 0
+    for i = 1, #sequencePreview.frames do
+        if sequenceSeen[i] then seenCount += 1 end
+    end
+    sequenceInfoLabel.Text = "Preview " .. index .. "/" .. #sequencePreview.frames ..
+        " at " .. frame.offsetMs .. " ms, " .. seenCount .. " of " ..
+        #sequencePreview.frames .. " frames reviewed. No pixels shared."
+end
+
+sequenceCaptureButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if sequenceRecording then error("A sequence capture is already running") end
+        clearSequence()
+        local granted = StudioCaptureService:RequestScreenshotPermissionAsync()
+        if not granted or not StudioCaptureService:CanCaptureScreenshot() then
+            error("Studio screenshot permission denied or active viewport unavailable")
+        end
+        sequenceRecording = true
+        sequenceCancel = false
+        sequenceInfoLabel.Text = "Capturing up to 6 frames. Click Cancel to stop."
+        task.spawn(function()
+            local ok, failure = pcall(function()
+                local frames = {}
+                local startClock = os.clock()
+                local capturedTimestamp = os.time()
+                local targetW, targetH, aspect = nil, nil, nil
+                for index = 1, SEQUENCE_FRAMES do
+                    if sequenceCancel then error("Sequence capture cancelled") end
+                    if not StudioCaptureService:CanCaptureScreenshot() then
+                        error("Studio viewport became unavailable")
+                    end
+                    local offsetMs = index == 1 and 0 or
+                        math.max(math.floor((os.clock() - startClock) * 1000 + 0.5),
+                            frames[#frames].offsetMs + 1)
+                    local capture = StudioCaptureService:CaptureScreenshot({
+                        Format = Enum.StudioCaptureScreenshotFormat.RGBA8,
+                        UICaptureMode = Enum.UICaptureMode.All,
+                    })
+                    waitForCapture(capture)
+                    local original = capture.Resolution
+                    if original.X < 1 or original.Y < 1 then
+                        error("Invalid Studio screenshot resolution")
+                    end
+                    local currentAspect = original.X / original.Y
+                    if aspect and math.abs(currentAspect - aspect) > 0.015 then
+                        error("Viewport aspect ratio changed during recording; discard")
+                    end
+                    if not targetW then
+                        local scale = math.min(1, SEQUENCE_MAX_W / original.X,
+                            SEQUENCE_MAX_H / original.Y)
+                        targetW = math.max(1, math.floor(original.X * scale))
+                        targetH = math.max(1, math.floor(original.Y * scale))
+                        aspect = currentAspect
+                    end
+                    if original.X ~= targetW or original.Y ~= targetH then
+                        capture = capture:ScaleAsync(Enum.ResamplerMode.Default,
+                            Vector2.new(targetW, targetH))
+                        waitForCapture(capture)
+                    end
+                    local pixels = capture:GetBuffer()
+                    if buffer.len(pixels) ~= targetW * targetH * 4 then
+                        error("Unexpected RGBA byte count for sequence frame")
+                    end
+                    table.insert(frames, {
+                        pixels = pixels,width = targetW,height = targetH,
+                        offsetMs = offsetMs,
+                    })
+                    sequenceInfoLabel.Text = "Captured " .. index .. "/" ..
+                        SEQUENCE_FRAMES .. " samples locally; nothing shared."
+                    if index < SEQUENCE_FRAMES then
+                        local waited = 0
+                        while waited < SEQUENCE_GAP_SECONDS do
+                            if sequenceCancel then error("Sequence capture cancelled") end
+                            local dt = math.min(0.1,SEQUENCE_GAP_SECONDS - waited)
+                            task.wait(dt)
+                            waited += dt
+                        end
+                    end
+                end
+                if sequenceCancel then error("Sequence capture cancelled") end
+                sequencePreview = {
+                    capturedTimestamp = capturedTimestamp,
+                    frames = frames,width = targetW,height = targetH,
+                }
+                showSequenceFrame(1)
+                setStatus("Sequence captured locally. Review every frame using Next/Previous, " ..
+                    "then decide whether to share or discard.")
+            end)
+            sequenceRecording = false
+            if not ok then
+                clearSequence()
+                sequenceInfoLabel.Text = "No sequence ready to share: " .. tostring(failure):sub(1,150)
+                setStatus("Sequence capture ended without sharing.")
+            end
+        end)
+    end)
+end)
+
+sequencePreviousButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if sequenceRecording then error("Capture in progress") end
+        showSequenceFrame(math.max(1,sequenceIndex-1))
+    end)
+end)
+
+sequenceNextButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if sequenceRecording then error("Capture in progress") end
+        if not sequencePreview then error("No sequence captured") end
+        showSequenceFrame(math.min(#sequencePreview.frames,sequenceIndex+1))
+    end)
+end)
+
+sequenceShareButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if sequenceRecording then error("Stop or finish recording first") end
+        local sequence = sequencePreview
+        if not sequence or #sequence.frames ~= SEQUENCE_FRAMES then
+            error("Six-frame preview required before sharing")
+        end
+        if #tokenBox.Text < 16 then error("Enter the local bridge session token") end
+        for i = 1, #sequence.frames do
+            if not sequenceSeen[i] then
+                error("Review all six frames before sharing; frame " .. i .. " not viewed")
+            end
+        end
+        local offsets = {}
+        local stride = sequence.width * sequence.height * 4
+        local body = buffer.create(stride * #sequence.frames)
+        for i, frame in ipairs(sequence.frames) do
+            offsets[i] = tostring(frame.offsetMs)
+            buffer.copy(body,(i-1)*stride,frame.pixels,0,stride)
+        end
+        -- Consume the approved snapshot before POST. A timeout after server
+        -- acceptance must not cause a duplicate upload on a double-click.
+        clearSequence()
+        local response = HttpService:RequestAsync({
+            Url = BRIDGE .. "/v1/studio/sequence",Method = "POST",
+            Headers = {
+                Authorization = "Bearer " .. tokenBox.Text,
+                ["Content-Type"] = "application/octet-stream",
+                ["X-Sequence-Width"] = tostring(sequence.width),
+                ["X-Sequence-Height"] = tostring(sequence.height),
+                ["X-Sequence-Captured-At"] = tostring(sequence.capturedTimestamp),
+                ["X-Sequence-Offsets"] = table.concat(offsets,","),
+            },
+            Body = buffer.tostring(body),
+        })
+        local data = HttpService:JSONDecode(response.Body)
+        if not response.Success then
+            error("Sequence upload failed: HTTP " .. tostring(response.StatusCode) ..
+                " " .. tostring(data.error))
+        end
+        sequenceInfoLabel.Text = "Shared " .. data.frameCount .. " frames over " ..
+            data.durationMs .. " ms. ID: " .. data.sequenceId
+        setStatus("Frozen sequence available via lazydev_list_sequences and " ..
+            "lazydev_read_sequence; no live video or automated quality verdict.")
+    end)
+end)
+
+sequenceDiscardButton.MouseButton1Click:Connect(function()
+    -- This control must remain available even during an active asynchronous capture.
+    sequenceCancel = true
+    if sequenceRecording then
+        sequenceInfoLabel.Text = "Cancelling capture. No frames will be uploaded."
+    else
+        clearSequence()
+        sequenceInfoLabel.Text = "Local sequence discarded; nothing shared."
+    end
 end)
 
 showButton.Click:Connect(function()

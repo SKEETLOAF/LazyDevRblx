@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.9 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V1.0 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -112,6 +112,21 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] User/agent reference deconstruction separates observed elements, likely implementation choices, unknowns, quality criteria, and revisions.
 - [ ] Restarting the local daemon expires imported references; secrets and local file paths are not exposed in tool results.
 - [ ] Measure edge/readability behavior at real Roblox viewing scale and record human judgment separately from automatic metrics.
+
+## V1.0 temporal screenshots (not yet verified in Roblox Studio)
+
+- [ ] Installing the updated plugin shows **Capture 6-frame viewport sequence**, individual frame-review navigation, Share and Cancel/Discard.
+- [ ] Screenshot permission is requested only after the user clicks Capture. Denial leaves no shareable frames.
+- [ ] Six 3D viewport screenshots are taken sequentially, at at most 240×160 pixels each, with measured capture-request offsets.
+- [ ] A capture failure/changed aspect ratio/cancellation leaves no shareable incomplete sequence.
+- [ ] The preview displays the same pixels that would be sent, and Share refuses before every sampled frame has been reviewed.
+- [ ] Cancel and Discard do not send any frames to the bridge or clear the project Output window.
+- [ ] Share makes one authenticated, bounded binary request; the bridge stores six frames without inferring an exact FPS.
+- [ ] MCP `lazydev_list_sequences` and `lazydev_read_sequence` expose truthful capture timestamps, frame offsets, measurements and real PNG samples.
+- [ ] Actual visual timing of an effects playback is distinguishable from camera drift, viewport rendering variability and dropped sample intervals.
+- [ ] With an imported GIF, `lazydev_compare_sequence_reference` returns relative-time nearest frame pairs and no fabricated quality verdict.
+- [ ] Studio Play/Run recording behavior is checked separately; no claims of client viewport access without evidence.
+- [ ] No game scripts, native Studio actions or third-party Sine/Eclipse plugin controls are triggered by the sequence capture.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 
