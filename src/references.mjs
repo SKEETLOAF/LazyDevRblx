@@ -24,7 +24,7 @@ function scalePixels(src,width,height,limitWidth=480,limitHeight=300) {
 const labelValid = v => typeof v === 'string' && v.trim().length>0 &&
   Buffer.byteLength(v,'utf8')<=MAX_LABEL_BYTES && !/[\u0000-\u001f\u007f]/u.test(v);
 
-function metrics(pixels,width,height,previous=null) {
+export function analyzePixels(pixels,width,height,previous=null) {
   // Evaluate fixed spatial samples, not a fabricated aesthetic score.
   // Sampling lets GIF analysis remain bounded even with hundreds of frames.
   const gridW=Math.min(width,64),gridH=Math.min(height,64);
@@ -79,7 +79,7 @@ function describeMedia(decoded,buffer){
   let previous=null,peakChange=null,totalMs=0;
   for(let i=0;i<n;i++){
     const f=decoded.frames[i];
-    const m=metrics(f.pixels,decoded.width,decoded.height,previous);
+    const m=analyzePixels(f.pixels,decoded.width,decoded.height,previous);
     const data={index:i,atMs:f.timeMs,durationMs:f.durationMs,...m};
     frames.push(data);
     totalMs+=f.durationMs;
@@ -159,7 +159,7 @@ export class ReferenceStore {
     const frame=r.frames[frameIndex??(r.peakChange?.frameIndex??0)];
     const viewport=viewportStore.read(viewportId);
     const pixels=decodeReference(viewport.png,'image/png');
-    const v=metrics(pixels.frames[0].pixels,pixels.width,pixels.height);
+    const v=analyzePixels(pixels.frames[0].pixels,pixels.width,pixels.height);
     const fields=['luminanceMean','luminanceStdDev','saturationMean','alphaCoverage','edgeFraction'];
     const delta=Object.fromEntries(fields.map(key=>[key,rnd(v[key]-frame[key])]));
     return {

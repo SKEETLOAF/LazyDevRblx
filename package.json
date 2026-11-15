@@ -1,6 +1,6 @@
 {
   "name": "lazy-devkit",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned Roblox Studio inspection, review and visual evidence bridge",

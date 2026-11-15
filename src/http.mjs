@@ -4,6 +4,7 @@ import { InputError } from './state.mjs';
 import { handleRpc } from './mcp.mjs';
 import { VIEWPORT_MAX_BYTES, VIEWPORT_MAX_WIDTH, VIEWPORT_MAX_HEIGHT } from './viewport.mjs';
 import { MEDIA_MAX_BYTES } from './reference-media.mjs';
+import { SEQUENCE_MAX_WIDTH,SEQUENCE_MAX_HEIGHT,SEQUENCE_MAX_FRAMES,SEQUENCE_MAX_BYTES } from './sequences.mjs';
 
 const BODY_LIMIT = 350 * 1024;
 
@@ -12,6 +13,51 @@ function send(response, status, body) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   response.end(json);
+}
+
+async function readSequenceFrames(request) {
+  if(request.headers['content-type']?.toLowerCase() !== 'application/octet-stream') {
+    throw new InputError('RGBA sequence requires application/octet-stream',415);
+  }
+  const w=request.headers['x-sequence-width'];
+  const h=request.headers['x-sequence-height'];
+  const t=request.headers['x-sequence-captured-at'];
+  const timeline=request.headers['x-sequence-offsets'];
+  if(!/^[1-9][0-9]{0,2}$/.test(w??'') ||
+     !/^[1-9][0-9]{0,2}$/.test(h??'') ||
+     !/^[1-9][0-9]{8,11}$/.test(t??'') ||
+     typeof timeline!=='string' || timeline.length>96 ||
+     !/^0(,[1-9][0-9]{0,4}){1,5}$/.test(timeline)) {
+    throw new InputError('Invalid sequence dimension, time or offsets');
+  }
+  const width=Number(w),height=Number(h);
+  const offsetsMs=timeline.split(',').map(Number);
+  const capturedTimestamp=Number(t);
+  if(width>SEQUENCE_MAX_WIDTH || height>SEQUENCE_MAX_HEIGHT ||
+     offsetsMs.length>SEQUENCE_MAX_FRAMES) {
+    throw new InputError('Sequence exceeds frame or resolution budget',413);
+  }
+  if(offsetsMs.at(-1)>30000 || offsetsMs.some((v,i)=>i>0&&v<=offsetsMs[i-1])) {
+    throw new InputError('Frame timestamps must increase strictly within 30s');
+  }
+  const now=Math.floor(Date.now()/1000);
+  if(!Number.isSafeInteger(capturedTimestamp) ||
+     capturedTimestamp<now-86400 || capturedTimestamp>now+60){
+    throw new InputError('Invalid sequence capture timestamp');
+  }
+  const expected=width*height*4*offsetsMs.length;
+  if(expected>SEQUENCE_MAX_BYTES)throw new InputError('Sequence exceeds upload budget',413);
+  const chunks=[];let total=0;
+  for await(const chunk of request){
+    total+=chunk.length;
+    if(total>expected || total>SEQUENCE_MAX_BYTES){
+      throw new InputError('RGBA sequence body exceeds declared size',413);
+    }
+    chunks.push(chunk);
+  }
+  const pixels=Buffer.concat(chunks);
+  if(pixels.length!==expected)throw new InputError('RGBA sequence byte length mismatch');
+  return {width,height,offsetsMs,capturedTimestamp,pixels};
 }
 
 async function readReferenceUpload(request) {
@@ -110,7 +156,10 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.9.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '1.0.0' });
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/studio/sequence') {
+        return send(res,201,state.inspectSequence(await readSequenceFrames(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/references/import') {
         const {bytes,options}=await readReferenceUpload(req);
