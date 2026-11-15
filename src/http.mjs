@@ -17,6 +17,16 @@ async function readViewportPixels(request) {
   if (request.headers['content-type']?.toLowerCase() !== 'application/octet-stream') {
     throw new InputError('application/octet-stream required', 415);
   }
+  const timestampText=request.headers['x-viewport-captured-at'];
+  if(!/^[1-9][0-9]{8,11}$/.test(timestampText ?? '')) {
+    throw new InputError('Missing or invalid capture timestamp');
+  }
+  const capturedTimestamp=Number(timestampText);
+  const now=Math.floor(Date.now()/1000);
+  if(!Number.isSafeInteger(capturedTimestamp) ||
+     capturedTimestamp < now-24*60*60 || capturedTimestamp > now+60) {
+    throw new InputError('Capture timestamp is outside allowed window');
+  }
   const widthText=request.headers['x-viewport-width'];
   const heightText=request.headers['x-viewport-height'];
   if (!/^[1-9][0-9]{0,3}$/.test(widthText ?? '') ||
@@ -40,7 +50,7 @@ async function readViewportPixels(request) {
   }
   const pixels=Buffer.concat(chunks);
   if(pixels.length!==expected) throw new InputError('Viewport RGBA byte length mismatch');
-  return {width,height,pixels};
+  return {width,height,pixels,capturedTimestamp};
 }
 
 async function readJson(request) {

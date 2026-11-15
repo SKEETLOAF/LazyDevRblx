@@ -95,7 +95,7 @@ See [Phase 5 Play/Run reports](docs/PHASE-5-PLAYTEST-REPORTS.md) for the evidenc
 2. In an active disposable place, open LAZY DevKit and click **Capture & preview current 3D viewport**. Roblox may ask you to grant screenshot permission to the plugin. If permission is refused, capture is unavailable.
 3. Review the image **inside the plugin panel**. It is the same frozen pixels used for sharing. The capture can include in-game UI (not the entire desktop) and may reveal private information.
 4. Choose **Share previewed viewport image with MCP** or **Discard local viewport frame**. Preview and Discard do not send screenshots to the bridge.
-5. Once shared, call `lazydev_list_viewports` and `lazydev_read_viewport` in a connected AI client. The read result includes metadata and a real `image/png` MCP image content block. Host clients must support MCP image responses to display/analyze it.
+5. Once shared, call `lazydev_list_viewports` and `lazydev_read_viewport` in a connected AI client. The read result includes actual capture time, separate bridge receipt time, and a real `image/png` MCP image content block. Host clients must support MCP image responses to display/analyze it.
 6. An image is evidence of what the camera showed at one instant, not proof of what exists off-screen, what gameplay functions correctly, or what a real player sees.
 
 See [Phase 6 viewport observation](docs/PHASE-6-VIEWPORT-OBSERVATION.md) for API choices, limits, and manual verification gates.
@@ -113,10 +113,10 @@ See [Phase 6 viewport observation](docs/PHASE-6-VIEWPORT-OBSERVATION.md) for API
 - Exact-span edits are calculated against the captured script source, then delivered as full replacements to the Studio plugin. This is **not** an AST-based patch or collaborative merge. Exact-span matching refuses missing and ambiguous text; Studio must also reject changes to the source after inspection.
 - Structure inspection deliberately captures only a bounded subset of Instances and allowlisted properties; a truncated tree must never be mistaken for a complete project scan. All captured names and scripts must be treated as untrusted inputs.
 - Studio source recording is an undo mechanism, not a durable backup or guaranteed rollback after a crash. Use version control and test in a disposable place first.
-- The bridge never executes user-submitted source, loads assets, controls third-party plugins, captures screens, or contacts external endpoints.
+- The bridge never executes user-submitted source, loads assets, or controls third-party plugins. It receives only opt-in screenshots from the Studio plugin and never captures the desktop or contacts external endpoints.
 
 ## Next evidence gates
 
-Validate V0.4 scene actions, V0.5 Output sharing, V0.6 native test launch/reporting, and V0.7 screenshot capture/preview in a real Windows Studio build. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. No screenshot capture or specialist tool automation is currently implemented.
+Validate V0.4 scene actions, V0.5 Output sharing, V0.6 native test launch/reporting, and V0.7 screenshot capture/preview in a real Windows Studio build. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.

@@ -82,6 +82,7 @@ test('viewport rejects malformed pixels, dimensions, and excessive frames', () =
   assert.throws(()=>store.inspect({pixels:small,width:2.5,height:2}),ViewportInputError);
   assert.throws(()=>store.inspect({pixels:small,width:VIEWPORT_MAX_WIDTH+1,height:1}),ViewportInputError);
   assert.throws(()=>store.inspect({pixels:small,width:2,height:VIEWPORT_MAX_HEIGHT+1}),ViewportInputError);
+  assert.throws(()=>store.inspect({pixels:small,width:2,height:2,capturedTimestamp:1}),ViewportInputError);
   const max=Buffer.alloc(VIEWPORT_MAX_BYTES,127);
   const png=encodeRgbaPng(max,VIEWPORT_MAX_WIDTH,VIEWPORT_MAX_HEIGHT);
   assert.ok(png.length<max.length,'repeated pixels should compress');
@@ -98,7 +99,8 @@ test('HTTP requires authenticated binary RGBA pixels, with exact size and strict
   const send=(body,headers={})=>fetch(base+path,{
     method:'POST',headers:{
       Authorization:'Bearer '+token,'Content-Type':'application/octet-stream',
-      'X-Viewport-Width':'2','X-Viewport-Height':'2',...headers,
+      'X-Viewport-Width':'2','X-Viewport-Height':'2',
+      'X-Viewport-Captured-At':String(Math.floor(Date.now()/1000)),...headers,
     },body,
   });
   assert.equal((await fetch(base+path,{method:'POST',headers:{
@@ -111,10 +113,13 @@ test('HTTP requires authenticated binary RGBA pixels, with exact size and strict
   assert.equal((await send(small,{'X-Viewport-Width':'3'})).status,400);
   assert.equal((await send(small,{'X-Viewport-Width':'999'})).status,413);
   assert.equal((await send(small,{'X-Viewport-Width':'2.0'})).status,400);
+  assert.equal((await send(small,{'X-Viewport-Captured-At':'1'})).status,400);
   const good=await send(small);
   assert.equal(good.status,201);
   const metadata=await good.json();
   assert.equal(metadata.width,2);
+  assert.ok(metadata.capturedAt);
+  assert.ok(metadata.receivedAt);
   assert.equal(metadata.height,2);
   assert.equal(metadata.bytes>32,true);
   assert.equal(tool(state,'lazydev_list_viewports')[0].type,'text');

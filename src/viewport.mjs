@@ -70,11 +70,17 @@ export function encodeRgbaPng(pixels, width, height) {
 
 export class ViewportStore {
   constructor() { this.frames=new Map(); }
-  inspect({pixels,width,height}) {
+  inspect({pixels,width,height,capturedTimestamp=Math.floor(Date.now()/1000)}) {
+    const now=Math.floor(Date.now()/1000);
+    if(!Number.isInteger(capturedTimestamp) ||
+       capturedTimestamp < now-24*60*60 || capturedTimestamp > now+60) {
+      invalid('Invalid or excessively old capture timestamp');
+    }
     const png=encodeRgbaPng(pixels,width,height);
     const item={
       viewportId:randomUUID(),kind:'studio_3d_viewport',width,height,
-      capturedAt:new Date().toISOString(),sha256:createHash('sha256').update(png).digest('hex'),
+      capturedAt:new Date(capturedTimestamp*1000).toISOString(),
+      receivedAt:new Date().toISOString(),sha256:createHash('sha256').update(png).digest('hex'),
       bytes:png.length, png,
     };
     this.frames.set(item.viewportId,item);

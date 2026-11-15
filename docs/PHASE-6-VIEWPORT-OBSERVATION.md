@@ -19,13 +19,13 @@ Roblox now supplies a purpose-built Studio-only screenshot API, `StudioCaptureSe
 4. Confirm the buffer is exactly `width * height * 4` bytes. The plugin displays the frozen image using `AssetService:CreateEditableImage({Size = resolution})`, `WritePixelsBuffer`, and `ImageLabel.ImageContent = Content.fromObject(editableImage)`. If this local exact preview cannot be constructed, fail closed and do not enable sharing.
 5. Only a second explicit **Share previewed viewport image with MCP** click transfers those same pixel bytes to the token-protected localhost bridge. **Discard local viewport frame** clears the local preview with no request.
 
-Roblox `HttpService:RequestAsync` accepts binary request body strings. Use the `application/octet-stream` content type and restricted `X-Viewport-Width`/`X-Viewport-Height` headers. This is preferable to JSON/base64 for the image payload and retains the exact approved RGBA data.
+Roblox `HttpService:RequestAsync` accepts binary request body strings. Use the `application/octet-stream` content type and restricted `X-Viewport-Width`/`X-Viewport-Height` headers plus a Unix-second `X-Viewport-Captured-At` header. This is preferable to JSON/base64 for the image payload and retains the exact approved RGBA data.
 
 ## Bridge and MCP implementation
 
 The bridge `POST /v1/studio/viewport` endpoint requires the existing per-session bearer token and no browser Origin. It refuses unexpected content types, malformed dimensions, frames larger than 480×300, truncated/oversized bodies, and anything except exactly 4 bytes per pixel.
 
-The Node server encodes the same RGBA pixels as a valid 8-bit PNG (no new dependency), records the PNG SHA-256 and capture timestamp, and retains only **four** screenshots in daemon memory. The server does not call Roblox APIs and does not upload images to any public server.
+The Node server encodes the same RGBA pixels as a valid 8-bit PNG (no new dependency), records the PNG SHA-256, actual capture timestamp and separate bridge-received timestamp, and retains only **four** screenshots in daemon memory. The server does not call Roblox APIs and does not upload images to any public server.
 
 New MCP tools:
 

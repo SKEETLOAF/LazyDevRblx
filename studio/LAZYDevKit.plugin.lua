@@ -237,6 +237,7 @@ viewportCaptureButton.MouseButton1Click:Connect(function()
         viewportImage.ImageContent = Content.fromObject(previewImage)
         viewportPreview = {
             pixels = pixels, width = width, height = height, image = previewImage,
+            capturedTimestamp = os.time(),
         }
         viewportInfoLabel.Text = "Local preview: " .. width .. "x" .. height ..
             " pixels. No image has been shared."
@@ -263,6 +264,7 @@ viewportShareButton.MouseButton1Click:Connect(function()
                 ["Content-Type"] = "application/octet-stream",
                 ["X-Viewport-Width"] = tostring(snapshot.width),
                 ["X-Viewport-Height"] = tostring(snapshot.height),
+                ["X-Viewport-Captured-At"] = tostring(snapshot.capturedTimestamp),
             },
             Body = buffer.tostring(snapshot.pixels),
         })
