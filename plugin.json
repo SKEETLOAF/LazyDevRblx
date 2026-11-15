@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lazy-devkit",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Local-first Roblox Studio inspections and manually approved script edit proposals.",
   "repository": "https://github.com/SKEETLOAF/LazyDevRblx",
   "extensions": {

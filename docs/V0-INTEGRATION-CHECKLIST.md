@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4/V0.5 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -44,6 +44,18 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Studio UI/receipts handle daemon disconnect after an applied change without applying twice.
 - [ ] GUI creation under StarterGui/ScreenGui and GUI property edits work in a disposable place.
 - [ ] Check Lua syntax/API support of new UI and approval handler in the currently installed Windows Studio build.
+
+## V0.5 Output diagnostics (not yet executed in Studio)
+
+- [ ] The new local plugin has a **Preview Studio Output warnings/errors locally** action and a separate **Share previewed Output with MCP** action.
+- [ ] Before Share is clicked, neither ChatGPT nor another MCP client receives this Output capture.
+- [ ] Preview displays only error/warning messages from Studio Output, at most 80 messages, and reports truncated history/messages.
+- [ ] Discard clears the local preview without altering the actual Studio Output window.
+- [ ] A known disposable Lua warning and error appear in the preview after a manual Studio playtest.
+- [ ] After explicit Share, the AI can list/read the frozen diagnostic snapshot and distinguish captured timestamps from live monitoring.
+- [ ] Output containing private data or token strings can be previewed and discarded before sharing; no secrets are automatically transmitted.
+- [ ] Restarting the daemon clears diagnostic observations; missing or inaccessible history is reported as an error, not made-up test results.
+- [ ] Verify LogService:GetLogHistory() behavior and plugin permissions in the actual Windows Studio version.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 

@@ -1,6 +1,6 @@
 {
   "name": "lazy-devkit",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned inspection and script-edit proposal bridge for Roblox Studio",
