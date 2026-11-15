@@ -4,6 +4,7 @@ import { SceneProposalStore, SceneInputError } from './scene.mjs';
 import { DiagnosticsStore, DiagnosticInputError } from './diagnostics.mjs';
 import { PlaytestStore, PlaytestInputError } from './playtests.mjs';
 import { ViewportStore, ViewportInputError } from './viewport.mjs';
+import { SineStore, SineInputError } from './sine.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -39,6 +40,7 @@ export class DevKitState {
     this.diagnostics = new DiagnosticsStore();
     this.playtests = new PlaytestStore();
     this.viewports = new ViewportStore();
+    this.sine = new SineStore();
   }
 
   inspect(input) {
@@ -144,6 +146,24 @@ export class DevKitState {
     try { return this.viewports.read(requireString(id, 'viewportId', 100)); }
     catch (error) {
       if (error instanceof ViewportInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  inspectSine(input) {
+    try { return this.sine.inspect(input); }
+    catch(error) {
+      if(error instanceof SineInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  listSine() { return this.sine.list(); }
+
+  readSine(id) {
+    try { return this.sine.read(requireString(id,'sineId',100)); }
+    catch(error) {
+      if(error instanceof SineInputError) throw new InputError(error.message,error.status);
       throw error;
     }
   }

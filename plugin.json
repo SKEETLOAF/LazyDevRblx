@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lazy-devkit",
-  "version": "0.7.0",
-  "description": "Local-first Roblox Studio inspections and manually approved script edit proposals.",
+  "version": "0.8.0",
+  "description": "Opt-in Roblox Studio evidence, manually reviewed edits, and Sine runtime inspection, with native MCP coexistence guidance.",
   "repository": "https://github.com/SKEETLOAF/LazyDevRblx",
   "extensions": {
     "com.openai": {
