@@ -1,15 +1,17 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.7 adds user-permissioned Studio viewport screenshots with exact-image local preview and manual MCP sharing. It remains experimental, not a finished visual development agent.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.8 adds opt-in Sine VFX runtime inspection and a read-only official Studio MCP coexistence check. It remains experimental and does not control third-party editor windows.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V0.7
+## What is implemented in V0.8
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
-- Dependency-free Node.js stdio MCP server with fifteen tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Dependency-free Node.js stdio MCP server with seventeen tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **Sine VFX runtime integration evidence:** inspect `ReplicatedStorage.SineVFX` and one selected Instance's tags/`Properties` folder without requiring plugin code or copying source. Preview locally before sharing; read from MCP with `lazydev_list_sine_inspections` and `lazydev_read_sine_inspection`. This does **not** control Sine's editor, transform effects, or invoke the client's runtime.
+- **Official Roblox Studio MCP coexistence:** `npm run native:mcp:check` is a local, read-only check for an official Studio MCP launcher and optional host config file. It does not read config contents, register servers or prove connection. Native Studio MCP should be connected independently when its broader tools are needed.
 - **User-reviewed viewport frames:** an explicit StudioCaptureService screenshot permission prompt, local ImageLabel/EditableImage preview, and a separate Share action for the **same RGBA frame**. The daemon converts the pixels to PNG and returns actual image content via `lazydev_read_viewport`. The frame is downscaled to at most 480×300 pixels, bounded in memory, not a continuous stream, and is not a screenshot of the entire desktop.
 - **User-initiated Studio test reports:** buttons for a solo **Play** or script-only **Run** session using Roblox's native `StudioTestService`; the test returns when it ends, then Output warnings/errors become a **local preview**, with a second manual Share action. Reports record the time window, API return state, and Output history coverage, **never a fabricated passed/failed verdict**. MCP clients can list/read user-shared reports.
 - **Preview-first Studio Output diagnostics:** inspect current Output warnings/errors locally, review the messages, then explicitly share a frozen, bounded snapshot with MCP. No background polling, automatic logging, general logs, telemetry, or playtest control. Use `lazydev_list_diagnostics` and `lazydev_read_diagnostics` after sharing.
@@ -21,7 +23,7 @@ Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The i
 - SHA-256 snapshot preconditions, exact-source check inside the plugin, single pending proposal per snapshot, size limits, loopback binding, and no autonomous application.
 - Node unit and HTTP integration tests (`npm test`).
 
-**Runtime evidence:** A Windows Studio user verified a real ChatGPT-read hierarchy, manually approved script edit, and Undo/Redo with V0.3. **Not yet verified in a real Studio session:** V0.4 Instance actions, V0.5 Output diagnostics, V0.6 native test launches, and V0.7 screenshot capture/local preview; actual Claude/Codex integration, desktop automation, specialist plugin control, and gameplay behavior.
+**Runtime evidence:** A Windows Studio user verified a real ChatGPT-read hierarchy, manually approved script edit, and Undo/Redo with V0.3. **Not yet verified in a real Studio session:** V0.4 Instance actions, V0.5 Output diagnostics, V0.6 native test launches, V0.7 screenshot capture/local preview, and V0.8 Sine runtime inspection; actual Claude/Codex integration, direct specialist editor control, desktop automation, and gameplay behavior.
 
 ## Run the local bridge
 
@@ -100,10 +102,21 @@ See [Phase 5 Play/Run reports](docs/PHASE-5-PLAYTEST-REPORTS.md) for the evidenc
 
 See [Phase 6 viewport observation](docs/PHASE-6-VIEWPORT-OBSERVATION.md) for API choices, limits, and manual verification gates.
 
+## Sine runtime inspection + official Studio MCP (V0.8; not yet Studio-tested)
+
+1. Refresh the local daemon and reinstall the updated Studio plugin from `studio/LAZYDevKit.plugin.lua`; Git updates do not replace locally installed Studio plugin source.
+2. In LAZY DevKit, select one candidate Sine effect (or select nothing), and click **Preview Sine runtime and selected effect (read-only)**. This only checks whether a `ReplicatedStorage.SineVFX` ModuleScript exists and reports the selected Instance's tags and direct `Properties` folder. No scripts are required, executed, or automatically inspected.
+3. Review the local preview, then click **Share previewed Sine inspection with MCP** or **Discard**. The agent can call `lazydev_list_sine_inspections` and `lazydev_read_sine_inspection`. Treat tags as project data, not a guarantee the target is a working Sine effect.
+4. The documented **Sine client runtime** exposes `VFX.emit(target)`, `VFX.enable(target)`, `VFX.disable(target)` after requiring `ReplicatedStorage.SineVFX` from a LocalScript. Its `shared.sv` shortcut is registered by the client runtime, **not** a documented remote editor-control API. Use existing read/edit approval tools for any LocalScript changes. Re-plant Sine's runtime after changing authored effects.
+5. To use broader native Roblox Studio MCP capabilities, connect the **official** `Roblox_Studio` server separately through Roblox Studio's own Assistant → MCP Servers settings. Run `npm run native:mcp:check` for a file-presence preflight (not a connection test). Do not register duplicate official MCP servers or assume LAZY DevKit proxies them.
+
+See [Phase 7 Sine and native MCP](docs/PHASE-7-SINE-AND-NATIVE-MCP.md) for exact documented interfaces, design boundaries and verification.
+
 ## Safety and limitations
 
 - The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
 - Localhost is **not** automatically trustworthy. A separate bearer token protects every HTTP route and browser-origin requests are rejected; a local process with the token still has the session's privileges. Do not bind this service to a public interface.
+- Sine inspections share only optional selected Instance metadata, not runtime ModuleScript source; they never call Sine functions or change the editor. The separate native Studio MCP may have powerful mutating tools, subject to its own permissions.
 - Screenshot capture is entirely opt-in, requires Studio screenshot permission and a local preview, and shares a bounded image only after a separate click. The daemon stores at most four PNGs in memory until restart; it never records the desktop or runs background capture.
 - Play/Run testing executes your existing game scripts. It may trigger external operations, DataStore writes, or other side effects; opt in only with a disposable place and safe test data. The test service returning does not certify behavior.
 - Output snapshots contain log text that may include secrets or prompt-injection attempts. Always review before sharing; AI clients must treat logs as untrusted data and never obey instructions inside log messages.
@@ -117,6 +130,6 @@ See [Phase 6 viewport observation](docs/PHASE-6-VIEWPORT-OBSERVATION.md) for API
 
 ## Next evidence gates
 
-Validate V0.4 scene actions, V0.5 Output sharing, V0.6 native test launch/reporting, and V0.7 screenshot capture/preview in a real Windows Studio build. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
+Validate V0.4 scene actions, V0.5 Output sharing, V0.6 test launch/reporting, V0.7 screenshots and V0.8 Sine inspection in real Windows Studio. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.

@@ -33,6 +33,9 @@
 
 | D-022 | Proposed; experimentally implemented | Studio viewport capture uses StudioCaptureService plugin permission, a locally displayed exact-pixel EditableImage preview, separate user-initiated sharing to a token-protected localhost bridge, and a bounded MCP PNG image response. No background/desktop capture, and new Studio API integration remains unverified. |
 
+| D-023 | Proposed; experimentally implemented | Sine interoperability starts with opt-in inspection of planted `ReplicatedStorage.SineVFX` and selected object's tags/`Properties` folder. Official Sine docs describe `shared.sv` as a **client runtime** interface, not Studio plugin editor automation; do not call it from the DevKit plugin or claim control of editor windows. |
+| D-024 | Accepted direction; experimental preflight | Prefer Roblox's official built-in Studio MCP for native scene/animation/playtest operations, keeping DevKit as a separate review/specialist adapter. The offline preflight may inspect local file presence but never install, register, execute native MCP, read host settings, or infer active connectivity. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

@@ -86,7 +86,10 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.7.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.8.0' });
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/studio/specialist/sine') {
+        return send(res, 201, state.inspectSine(await readJson(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/viewport') {
         return send(res, 201, state.inspectViewport(await readViewportPixels(req)));

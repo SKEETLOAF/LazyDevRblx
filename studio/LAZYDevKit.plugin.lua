@@ -1,4 +1,4 @@
--- LAZY DevKit Studio review panel (V0.7 experimental; script, scene, Output, test reports, viewport).
+-- LAZY DevKit Studio review panel (V0.8 experimental; reviewed script, scene, Output, viewport, Sine observations).
 -- Install as a local Studio plugin Script. Never paste a session token into game scripts.
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
@@ -8,6 +8,7 @@ local LogService = game:GetService("LogService")
 local StudioTestService = game:GetService("StudioTestService")
 local StudioCaptureService = game:GetService("StudioCaptureService")
 local AssetService = game:GetService("AssetService")
+local CollectionService = game:GetService("CollectionService")
 
 local BRIDGE = "http://127.0.0.1:43187"
 local MAX_SOURCE_BYTES = 128 * 1024
@@ -20,6 +21,7 @@ local sceneProposal = nil
 local diagnosticsPreview = nil
 local playtestPreview = nil
 local viewportPreview = nil
+local sinePreview = nil
 local playtestInProgress = false
 local busy = false
 
@@ -95,6 +97,12 @@ end
 
 addLabel("Local bridge at 127.0.0.1:43187. Paste the one-session token printed by the Node bridge. No automatic polling or editing.", 52)
 local tokenBox = addBox("Paste one-session token here", 35, true)
+addLabel("Sine VFX runtime: inspect module presence and selected effect metadata, without running plugin code.", 45)
+local sineInspectButton = addButton("Preview Sine runtime and selected effect (read-only)")
+local sineInfoLabel = addLabel("No Sine runtime inspection previewed.", 48)
+local sinePreviewBox = addBox("No Sine information collected", 110, false)
+local sineShareButton = addButton("Share previewed Sine inspection with MCP")
+local sineDiscardButton = addButton("Discard local Sine inspection")
 addLabel("Viewport capture: explicit permission, local preview, then manual Share.", 32)
 local viewportCaptureButton = addButton("Capture & preview current 3D viewport")
 local viewportInfoLabel = addLabel("No viewport frame captured.", 44)
@@ -548,6 +556,91 @@ playtestClearButton.MouseButton1Click:Connect(function()
         playtestBox.Text = ""
         playtestInfoLabel.Text = "Local test report discarded. Studio Output unchanged."
         setStatus("No test report shared.")
+    end)
+end)
+
+-- Sine's public docs describe shared.sv as an API registered by the
+-- client-side *runtime module*. The editor plugin is NOT automated here.
+-- We never require the module or access scripts' Source.
+sineInspectButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        sinePreview = nil
+        sinePreviewBox.Text = ""
+        local planted = game:GetService("ReplicatedStorage"):FindFirstChild("SineVFX")
+        local runtimeClass = planted and planted.ClassName or "none"
+        local selected = Selection:Get()
+        if #selected > 1 then
+            error("Select at most one effect object, or clear selection for a runtime-only check")
+        end
+        local selection = {
+            present = false,
+            path = "",
+            className = "",
+            tags = {},
+            tagsTruncated = false,
+            propertiesFolder = false,
+        }
+        if #selected == 1 then
+            local target = selected[1]
+            if not target:IsDescendantOf(game) then
+                error("Selected object is not a descendant of the open DataModel")
+            end
+            selection.present = true
+            selection.path = target:GetFullName()
+            selection.className = target.ClassName
+            local properties = target:FindFirstChild("Properties")
+            selection.propertiesFolder = properties ~= nil and properties:IsA("Folder")
+            local allTags = CollectionService:GetTags(target)
+            table.sort(allTags)
+            for _, tag in ipairs(allTags) do
+                if type(tag) == "string" and #tag > 0 and #tag <= 80 and
+                    #selection.tags < 16 then
+                    table.insert(selection.tags, tag)
+                else
+                    selection.tagsTruncated = true
+                end
+            end
+        end
+        sinePreview = {
+            kind = "sine_runtime",
+            runtimeClass = runtimeClass,
+            selection = selection,
+        }
+        local label = runtimeClass == "ModuleScript" and "ModuleScript present" or
+            (runtimeClass == "none" and "Missing" or "Unexpected " .. runtimeClass)
+        sinePreviewBox.Text = "ReplicatedStorage.SineVFX: " .. label ..
+            "\nSelected: " .. (selection.present and selection.path or "none") ..
+            "\nClass: " .. selection.className ..
+            "\nProperties folder: " .. tostring(selection.propertiesFolder) ..
+            "\nTags: " .. table.concat(selection.tags, ", ") ..
+            (selection.tagsTruncated and " (partial list)" or "") ..
+            "\nNo Sine module required, editor commands invoked, or source transmitted."
+        sineInfoLabel.Text = "Local read-only preview. No data shared."
+        setStatus("Inspect this Sine runtime/effect evidence, then Share or Discard. " ..
+            "Module presence does not prove correct animation or effect playback.")
+    end)
+end)
+
+sineShareButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if not sinePreview then
+            error("Preview a Sine inspection before sharing")
+        end
+        local preview = sinePreview
+        sinePreview = nil -- do not double-submit a potentially accepted request
+        local result = request("POST", "/v1/studio/specialist/sine", preview)
+        sineInfoLabel.Text = "Sine inspection shared: " .. result.sineId
+        setStatus("Read-only Sine evidence shared. Call lazydev_list_sine_inspections and " ..
+            "lazydev_read_sine_inspection in your MCP client.")
+    end)
+end)
+
+sineDiscardButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        sinePreview = nil
+        sinePreviewBox.Text = ""
+        sineInfoLabel.Text = "Local Sine inspection discarded."
+        setStatus("No Sine data shared.")
     end)
 end)
 

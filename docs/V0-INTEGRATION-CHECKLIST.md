@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.7 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.8 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -86,6 +86,19 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Missing/expired image IDs return an error, not hallucinated visuals or an auto-recapture.
 - [ ] Revoking screenshot permission prevents subsequent captures without breaking unrelated LAZY DevKit functionality.
 - [ ] Test the actual Studio-build API/security behavior for `StudioCaptureService`, `AssetService:CreateEditableImage`, and `ImageLabel.ImageContent`.
+
+## V0.8 specialist interoperability checks (not yet executed in Studio)
+
+- [ ] The Sine preview button reports `ReplicatedStorage.SineVFX` missing when no planted ModuleScript exists.
+- [ ] With a user-planted Sine runtime, the preview shows ModuleScript present (without requiring or running its code).
+- [ ] With one selected transformed effect, the preview shows exact selected path, class, direct `Properties` folder presence and bounded CollectionService tags.
+- [ ] Multiple selected Instances cause an error rather than an arbitrary first-target choice.
+- [ ] Previewing or discarding a Sine inspection does not send metadata to the MCP client.
+- [ ] Explicit Share results in `lazydev_list_sine_inspections` and `lazydev_read_sine_inspection` returning the opt-in snapshot.
+- [ ] No Sine plugin editor methods, transforms, or runtime `shared.sv` functions are called in the Studio plugin during inspection.
+- [ ] Status remains `module_present` rather than a claimed functional VFX success; replant and client runtime behavior need independent testing.
+- [ ] `npm run native:mcp:check` detects the native launcher on Windows without parsing host secrets or claiming a connection.
+- [ ] When native Studio MCP and LAZY DevKit are both installed, they do not compete for the same process/port or register duplicate `Roblox_Studio` servers.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 
