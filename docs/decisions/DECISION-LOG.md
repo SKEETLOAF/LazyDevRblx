@@ -27,6 +27,8 @@
 
 | D-019 | Proposed; implemented experimentally in V0.4 | Only one allowlisted Instance creation or typed property change may be proposed against a manually inspected structure. Require the original selected root, unchanged target identity/properties, explicit Studio approval, and undo recording. No arbitrary instance operations or code execution. Studio runtime verification pending. |
 
+| D-020 | Proposed; experimentally implemented | Studio Output observations are user-previewed and explicitly shared, read-only, restricted to bounded warnings/errors, and never auto-streamed to MCP. The feature must not be described as a verified playtest monitor until tested in Studio. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { StructureStore } from './structure.mjs';
 import { SceneProposalStore, SceneInputError } from './scene.mjs';
+import { DiagnosticsStore, DiagnosticInputError } from './diagnostics.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -33,6 +34,7 @@ export class DevKitState {
     this.proposals = new Map();
     this.structures = new StructureStore();
     this.scene = new SceneProposalStore(this.structures);
+    this.diagnostics = new DiagnosticsStore();
   }
 
   inspect(input) {
@@ -86,6 +88,24 @@ export class DevKitState {
     const result = this.structures.read(requireString(id, 'structureId', 100));
     if (!result) throw new InputError('Structure observation not found or expired', 404);
     return result;
+  }
+
+  inspectDiagnostics(input) {
+    try { return this.diagnostics.inspect(input); }
+    catch (error) {
+      if (error instanceof DiagnosticInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  listDiagnostics() { return this.diagnostics.list(); }
+
+  readDiagnostics(id) {
+    try { return this.diagnostics.read(requireString(id, 'diagnosticsId', 100)); }
+    catch (error) {
+      if (error instanceof DiagnosticInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
   }
 
   proposeSceneAction(input) {

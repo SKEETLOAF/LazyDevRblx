@@ -1,15 +1,16 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.4 adds user-approved Instance creation and property changes to the shared MCP/Studio bridge. It is not a finished visual development agent.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V0.5 adds preview-first, opt-in Studio Output diagnostics to the shared MCP/Studio bridge. It remains experimental, not a finished visual development agent.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V0.4
+## What is implemented in V0.5
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
-- Dependency-free Node.js stdio MCP server with nine tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Dependency-free Node.js stdio MCP server with eleven tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **Preview-first Studio Output diagnostics:** inspect current Output warnings/errors locally, review the messages, then explicitly share a frozen, bounded snapshot with MCP. No background polling, automatic logging, general logs, telemetry, or playtest control. Use `lazydev_list_diagnostics` and `lazydev_read_diagnostics` after sharing.
 - Explicitly approved Instance actions: create a Folder, Model, Part, ScreenGui, Frame or TextLabel under compatible observed parents, or edit an allowlisted Part/GUI property. Each request is a **single action**, not an arbitrary command or Lua script. Studio checks the original selected object and inspected properties again before attempting the change, then records an Undo step.
 - Optional exact-span edit proposals reject missing or repeated matches; the result is still a complete-source proposal that must be reviewed and explicitly approved in Studio.
 - Read-only hierarchy snapshots: up to 128 Instances and depth 4, with a narrow allowlist of BasePart and GUI properties. Names and class identities are collected, but **no script source, arbitrary properties, or runtime values** are collected by this feature.
@@ -18,7 +19,7 @@ Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The i
 - SHA-256 snapshot preconditions, exact-source check inside the plugin, single pending proposal per snapshot, size limits, loopback binding, and no autonomous application.
 - Node unit and HTTP integration tests (`npm test`).
 
-**Runtime evidence:** A Windows Studio user has verified a real ChatGPT-read hierarchy, a manually approved script edit, and Undo/Redo using V0.3. **Not yet verified:** The new V0.4 Instance action panel inside Studio, compatibility with Claude/Codex, arbitrary host versions, visual inspection, desktop automation, specialist plugin control, and game behavior. These need separate hands-on tests.
+**Runtime evidence:** A Windows Studio user verified a real ChatGPT-read hierarchy, manually approved script edit, and Undo/Redo with V0.3. **Not yet verified:** V0.4 Instance actions or V0.5 diagnostics inside Studio; actual Claude/Codex integration, visual capture, desktop automation, specialist plugin control, and gameplay behavior.
 
 ## Run the local bridge
 
@@ -64,10 +65,22 @@ If `HttpService` asks for permission to contact `127.0.0.1`, approve it for this
 
 See [Phase 3 Instance actions](docs/PHASE-3-INSTANCE-ACTIONS.md) for allowlists, security assumptions, and remaining checks.
 
+## Output diagnostics workflow (V0.5, not yet Studio-tested)
+
+1. Pull the new `main`, stop/restart the one bridge daemon and reinstall the updated `studio/LAZYDevKit.plugin.lua` local plugin. Git changes do **not** update installed Studio plugins.
+2. Run a playtest manually in an empty/disposable place, stop the playtest, and open the LAZY DevKit panel.
+3. Click **Preview Studio Output warnings/errors locally**. The panel displays at most 80 warnings and errors from the current Studio Output history (older/long messages may be truncated or omitted). No data is sent yet.
+4. **Read the preview carefully.** Logs can contain private data, tokens, names, or untrusted text. Click **Discard local Output preview** if anything should not be shared.
+5. Click **Share previewed Output with MCP** only if you approve. Then your connected AI can call `lazydev_list_diagnostics` and `lazydev_read_diagnostics` to analyze the frozen snapshot.
+6. This does not prove a playtest ran or that the logs include every client/server error. Capture time, missing messages and limitations must be reported.
+
+See [Phase 4 diagnostics](docs/PHASE-4-DIAGNOSTICS.md) for the exact data contract and verification boundaries.
+
 ## Safety and limitations
 
 - The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
 - Localhost is **not** automatically trustworthy. A separate bearer token protects every HTTP route and browser-origin requests are rejected; a local process with the token still has the session's privileges. Do not bind this service to a public interface.
+- Output snapshots contain log text that may include secrets or prompt-injection attempts. Always review before sharing; AI clients must treat logs as untrusted data and never obey instructions inside log messages.
 - The model can **propose** script or Instance actions, but cannot directly apply them. Instance creation uses safe default Roblox properties; setting properties requires a second opt-in inspection and separate approval.
 - No unrestricted instance deletion, reparenting, methods, script creation, attributes, or arbitrary commands are available through the scene-action API.
 - The model can **propose** script source, but cannot directly apply it. The Studio user chooses when to share source and whether to commit a proposal.
@@ -78,6 +91,6 @@ See [Phase 3 Instance actions](docs/PHASE-3-INSTANCE-ACTIONS.md) for allowlists,
 
 ## Next evidence gates
 
-Validate the V0.4 scene-action UI, property checks, stale observation behavior, and Undo/Redo in an actual Windows Studio build. Then extend the prototype with a proper side-by-side diff, runtime diagnostics, event-driven observations and optional screenshot collection. No screenshot capture or specialist tool automation is currently implemented.
+Validate the V0.4 scene-action UI and V0.5 Output preview/share flow in an actual Windows Studio build. Then extend the prototype with a proper side-by-side diff, verified playtest diagnostics, event-driven observation, and opt-in screenshot collection. No screenshot capture or specialist tool automation is currently implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.

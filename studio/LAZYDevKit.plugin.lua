@@ -1,9 +1,10 @@
--- LAZY DevKit Studio review panel (V0.4 experimental; script and scene approvals).
+-- LAZY DevKit Studio review panel (V0.5 experimental; script, scene and Output).
 -- Install as a local Studio plugin Script. Never paste a session token into game scripts.
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
+local LogService = game:GetService("LogService")
 
 local BRIDGE = "http://127.0.0.1:43187"
 local MAX_SOURCE_BYTES = 128 * 1024
@@ -13,6 +14,7 @@ local tracked = nil
 local proposal = nil
 local trackedStructure = nil
 local sceneProposal = nil
+local diagnosticsPreview = nil
 local busy = false
 
 local toolbar = plugin:CreateToolbar("LAZY DevKit")
@@ -87,6 +89,11 @@ end
 
 addLabel("Local bridge at 127.0.0.1:43187. Paste the one-session token printed by the Node bridge. No automatic polling or editing.", 52)
 local tokenBox = addBox("Paste one-session token here", 35, true)
+local diagnosticsPreviewButton = addButton("Preview Studio Output warnings/errors locally")
+local diagnosticsInfoLabel = addLabel("Output has not been previewed or shared.", 56)
+local diagnosticsBox = addBox("No warnings/errors previewed", 160, false)
+local diagnosticsShareButton = addButton("Share previewed Output with MCP (manual)")
+local diagnosticsClearButton = addButton("Discard local Output preview (does not clear Studio Output)")
 local structureButton = addButton("Inspect selected hierarchy (no script source)")
 local sceneCheckButton = addButton("Check for proposed Instance action")
 local sceneInfoLabel = addLabel("Instance actions: no proposal loaded.", 60)
@@ -139,6 +146,102 @@ end
 
 showButton.Click:Connect(function()
     widget.Enabled = not widget.Enabled
+end)
+
+-- Explicit two-step diagnostics sharing: preview locally first, then share
+-- that same frozen snapshot. We never subscribe to MessageOut or poll Studio.
+local MAX_DIAGNOSTIC_ENTRIES = 80
+local MAX_DIAGNOSTIC_BYTES = 1600
+
+local function boundedDiagnosticMessage(message)
+    if type(message) ~= "string" or message == "" then return nil, false end
+    if #message <= MAX_DIAGNOSTIC_BYTES then
+        if utf8.len(message) == nil then return nil, true end
+        return message, false
+    end
+    local prefix = string.sub(message, 1, MAX_DIAGNOSTIC_BYTES - 24)
+    while #prefix > 0 and utf8.len(prefix) == nil do
+        prefix = string.sub(prefix, 1, #prefix - 1)
+    end
+    if prefix == "" then return nil, true end
+    return prefix .. " [message truncated]", true
+end
+
+diagnosticsPreviewButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        diagnosticsPreview = nil
+        diagnosticsBox.Text = ""
+        local history = LogService:GetLogHistory()
+        local selected = {}
+        local truncated = false
+        local errorCount, warningCount = 0, 0
+        for _, entry in ipairs(history) do
+            local kind
+            if entry.messageType == Enum.MessageType.MessageError then
+                kind = "MessageError"
+            elseif entry.messageType == Enum.MessageType.MessageWarning then
+                kind = "MessageWarning"
+            end
+            if kind then
+                local message, shortened = boundedDiagnosticMessage(entry.message)
+                if shortened then truncated = true end
+                if message and message ~= "" then
+                    local stamp = tonumber(entry.timestamp) or 0
+                    if stamp < 0 or stamp > 1e12 then stamp = 0 end
+                    table.insert(selected, { message = message, type = kind, timestamp = stamp })
+                    if #selected > MAX_DIAGNOSTIC_ENTRIES then
+                        table.remove(selected, 1)
+                        truncated = true
+                    end
+                end
+            end
+        end
+        local output = {}
+        for i, entry in ipairs(selected) do
+            if entry.type == "MessageError" then
+                errorCount += 1
+            else
+                warningCount += 1
+            end
+            table.insert(output, tostring(i) .. ". [" .. entry.type .. "] " .. entry.message)
+        end
+        diagnosticsPreview = {
+            kind = "studio_output",
+            capturedTimestamp = os.time(),
+            truncated = truncated,
+            entries = selected,
+        }
+        diagnosticsBox.Text = #output > 0 and table.concat(output, "\n\n") or
+            "No warnings or errors available in Studio Output."
+        diagnosticsInfoLabel.Text = "Local preview: " .. errorCount .. " errors, " ..
+            warningCount .. " warnings" .. (truncated and " (partial)" or "")
+        setStatus("Review the Output preview for secrets or private data. " ..
+            "Nothing has been shared. Press Share only if you approve this snapshot.")
+    end)
+end)
+
+diagnosticsShareButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if not diagnosticsPreview then
+            error("Preview Studio Output before sharing; no automatic capture is enabled")
+        end
+        local preview = diagnosticsPreview
+        local response = request("POST", "/v1/studio/diagnostics", preview)
+        diagnosticsPreview = nil -- sharing is not repeatable by accidental double-click
+        diagnosticsInfoLabel.Text = "Shared Studio Output snapshot: " .. response.entryCount ..
+            " warnings/errors. ID: " .. response.diagnosticsId
+        setStatus("A frozen, read-only Output snapshot was shared manually. " ..
+            "Use lazydev_list_diagnostics / lazydev_read_diagnostics in the MCP client.")
+    end)
+end)
+
+diagnosticsClearButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        diagnosticsPreview = nil
+        diagnosticsBox.Text = ""
+        diagnosticsInfoLabel.Text = "Local preview discarded. Studio Output unchanged."
+        setStatus("No diagnostics sent. This button does not clear Studio Output.")
+    end)
 end)
 
 local function vector3(value)
