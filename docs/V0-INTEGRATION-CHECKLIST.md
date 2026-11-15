@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4/V0.5 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.6 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -56,6 +56,22 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] Output containing private data or token strings can be previewed and discarded before sharing; no secrets are automatically transmitted.
 - [ ] Restarting the daemon clears diagnostic observations; missing or inaccessible history is reported as an error, not made-up test results.
 - [ ] Verify LogService:GetLogHistory() behavior and plugin permissions in the actual Windows Studio version.
+
+## V0.6 Native Studio Play/Run test reports (not yet executed in Studio)
+
+- [ ] Updated Studio plugin shows distinct **Launch solo Play test** and **Launch Run simulation** controls.
+- [ ] Clicking Play starts the real Studio solo Play session; Stop ends it, and the plugin regains control.
+- [ ] Clicking Run starts the real Studio Run simulation; Stop ends it, and the plugin regains control.
+- [ ] The plugin refuses to launch another test while a session is active or Studio is already testing.
+- [ ] No test report is accessible to MCP before the user explicitly clicks Share.
+- [ ] A known test warning/error appears in the reviewed report if present in the plugin-visible Output history.
+- [ ] A report with no visible logs states **not assessed**, never passed.
+- [ ] If Output history was reset or changed, historyScope is `unfiltered_history` and the UI warns that earlier messages might be included.
+- [ ] Test API failure is recorded as `start_error`, without treating it as a passing test or sharing raw exception strings.
+- [ ] Discard leaves Studio Output unchanged and sends nothing.
+- [ ] A shared report is accessible through `lazydev_list_playtests` and `lazydev_read_playtest`, with duration, mode, verdict, warnings and errors.
+- [ ] Restarting the daemon removes prior in-memory test reports.
+- [ ] Test on disposable place without real DataStore/external side effects; do not extrapolate runtime behavior to production.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 

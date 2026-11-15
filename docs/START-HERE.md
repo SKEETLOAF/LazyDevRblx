@@ -12,6 +12,7 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 6. [Desktop connection](DESKTOP-CONNECTION.md): Experimental multi-client MCP packaging, shared daemon, token handoff, and Windows PC setup.
 7. [Phase 3 Instance actions](PHASE-3-INSTANCE-ACTIONS.md): Allowlisted, previewed Instance creation/property edits and remaining Studio tests.
 8. [Phase 4 diagnostics](PHASE-4-DIAGNOSTICS.md): Opt-in read-only Output warnings and errors, privacy boundaries, and verification.
+9. [Phase 5 Play/Run reports](PHASE-5-PLAYTEST-REPORTS.md): User-launched test sessions with reviewable evidence, native Studio Test API, and limitations.
 
 Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
 
@@ -36,4 +37,4 @@ Architecture, Skeleton → Flesh → Skin roadmap, and integration research were
 
 When new evidence or testing changes a conclusion, record the evidence, update the affected decision and cross-references, and leave a brief note indicating what was superseded. Keep unresolved assumptions visible.
 
-**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** V0.3 read/approve/Undo/Redo tested by user in Windows Studio. V0.4 reviewed Instance actions and V0.5 preview-first Output diagnostics implemented with Node tests; both newer Studio workflows remain unverified.
+**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** V0.3 read/approve/Undo/Redo tested by user in Windows Studio. V0.4 Instance actions, V0.5 Output diagnostics, and V0.6 user-initiated Play/Run reports implemented with Node tests; these newer Studio workflows remain unverified in Studio.

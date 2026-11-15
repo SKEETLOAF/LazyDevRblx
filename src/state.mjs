@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { StructureStore } from './structure.mjs';
 import { SceneProposalStore, SceneInputError } from './scene.mjs';
 import { DiagnosticsStore, DiagnosticInputError } from './diagnostics.mjs';
+import { PlaytestStore, PlaytestInputError } from './playtests.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -35,6 +36,7 @@ export class DevKitState {
     this.structures = new StructureStore();
     this.scene = new SceneProposalStore(this.structures);
     this.diagnostics = new DiagnosticsStore();
+    this.playtests = new PlaytestStore();
   }
 
   inspect(input) {
@@ -104,6 +106,24 @@ export class DevKitState {
     try { return this.diagnostics.read(requireString(id, 'diagnosticsId', 100)); }
     catch (error) {
       if (error instanceof DiagnosticInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  inspectPlaytest(input) {
+    try { return this.playtests.inspect(input); }
+    catch (error) {
+      if (error instanceof PlaytestInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  listPlaytests() { return this.playtests.list(); }
+
+  readPlaytest(id) {
+    try { return this.playtests.read(requireString(id, 'playtestId', 100)); }
+    catch (error) {
+      if (error instanceof PlaytestInputError) throw new InputError(error.message, error.status);
       throw error;
     }
   }
