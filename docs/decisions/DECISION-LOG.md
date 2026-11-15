@@ -29,6 +29,8 @@
 
 | D-020 | Proposed; experimentally implemented | Studio Output observations are user-previewed and explicitly shared, read-only, restricted to bounded warnings/errors, and never auto-streamed to MCP. The feature must not be described as a verified playtest monitor until tested in Studio. |
 
+| D-021 | Proposed; experimentally implemented | User-clicked native StudioTestService Play/Run sessions may produce explicit, local-preview, manually shared bounded test reports. No automatic pass verdict, background playtest automation, or assumed complete log coverage. Studio execution and compatibility remain unverified. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

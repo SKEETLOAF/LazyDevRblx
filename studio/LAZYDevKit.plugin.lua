@@ -1,10 +1,11 @@
--- LAZY DevKit Studio review panel (V0.5 experimental; script, scene and Output).
+-- LAZY DevKit Studio review panel (V0.6 experimental; script, scene, Output, test reports).
 -- Install as a local Studio plugin Script. Never paste a session token into game scripts.
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local LogService = game:GetService("LogService")
+local StudioTestService = game:GetService("StudioTestService")
 
 local BRIDGE = "http://127.0.0.1:43187"
 local MAX_SOURCE_BYTES = 128 * 1024
@@ -15,6 +16,8 @@ local proposal = nil
 local trackedStructure = nil
 local sceneProposal = nil
 local diagnosticsPreview = nil
+local playtestPreview = nil
+local playtestInProgress = false
 local busy = false
 
 local toolbar = plugin:CreateToolbar("LAZY DevKit")
@@ -94,6 +97,13 @@ local diagnosticsInfoLabel = addLabel("Output has not been previewed or shared."
 local diagnosticsBox = addBox("No warnings/errors previewed", 160, false)
 local diagnosticsShareButton = addButton("Share previewed Output with MCP (manual)")
 local diagnosticsClearButton = addButton("Discard local Output preview (does not clear Studio Output)")
+addLabel("Studio test reports: launches Play or Run only when you click below.", 34)
+local playButton = addButton("Launch solo Play test (stop it manually in Studio)")
+local runButton = addButton("Launch Run simulation (stop it manually in Studio)")
+local playtestInfoLabel = addLabel("No Studio test report captured.", 60)
+local playtestBox = addBox("Test report preview (no result has been shared)", 165, false)
+local playtestShareButton = addButton("Share reviewed test report with MCP")
+local playtestClearButton = addButton("Discard local test report preview")
 local structureButton = addButton("Inspect selected hierarchy (no script source)")
 local sceneCheckButton = addButton("Check for proposed Instance action")
 local sceneInfoLabel = addLabel("Instance actions: no proposal loaded.", 60)
@@ -241,6 +251,169 @@ diagnosticsClearButton.MouseButton1Click:Connect(function()
         diagnosticsBox.Text = ""
         diagnosticsInfoLabel.Text = "Local preview discarded. Studio Output unchanged."
         setStatus("No diagnostics sent. This button does not clear Studio Output.")
+    end)
+end)
+
+-- StudioTestService is a documented plugin API. We do not inject scripts
+-- into the game or stop a running test for the user. Only a button click starts
+-- a test; its results are kept locally until a SECOND explicit Share click.
+local function sameLogEntry(left, right)
+    return left.message == right.message and left.messageType == right.messageType and
+        left.timestamp == right.timestamp
+end
+
+local function createPlaytestPreview(mode, baseline, startedAt, endedAt, completed)
+    local ok, history = pcall(function()
+        return LogService:GetLogHistory()
+    end)
+    local first = 1
+    local historyScope = "unfiltered_history"
+    local truncated = not ok
+    if ok then
+        -- If the previous history remains an identical prefix, only collect the
+        -- new suffix. Otherwise, share the bounded history with an explicit
+        -- warning: it could include logs from before the Play/Run session.
+        if #history >= #baseline then
+            local equalPrefix = true
+            for i = 1, #baseline do
+                if not sameLogEntry(history[i], baseline[i]) then
+                    equalPrefix = false
+                    break
+                end
+            end
+            if equalPrefix then
+                first = #baseline + 1
+                historyScope = "new_suffix"
+            end
+        end
+    else
+        history = {}
+    end
+
+    local entries = {}
+    local shown = {}
+    for i = first, #history do
+        local entry = history[i]
+        local kind
+        if entry.messageType == Enum.MessageType.MessageError then
+            kind = "MessageError"
+        elseif entry.messageType == Enum.MessageType.MessageWarning then
+            kind = "MessageWarning"
+        end
+        if kind then
+            local message, shortened = boundedDiagnosticMessage(entry.message)
+            if shortened then truncated = true end
+            if message and message ~= "" then
+                local stamp = tonumber(entry.timestamp) or 0
+                if stamp < 0 or stamp > 1e12 then stamp = 0 end
+                table.insert(entries, {message = message, timestamp = stamp, type = kind})
+                if #entries > MAX_DIAGNOSTIC_ENTRIES then
+                    table.remove(entries, 1)
+                    truncated = true
+                end
+            end
+        end
+    end
+    for _, entry in ipairs(entries) do
+        table.insert(shown, "[" .. entry.type .. "] " .. entry.message)
+    end
+    local report = {
+        kind = "studio_playtest",
+        mode = mode,
+        returnState = completed and "returned" or "start_error",
+        startedAt = startedAt,
+        endedAt = endedAt,
+        historyScope = historyScope,
+        truncated = truncated,
+        entries = entries,
+    }
+    return report, #shown > 0 and table.concat(shown, "\n\n") or
+        "No warnings or errors found in the captured Studio Output history."
+end
+
+local function launchPlaytest(mode)
+    safeAction(function()
+        if playtestInProgress then error("Finish the current test before launching another") end
+        if not StudioTestService.EditModeActive then
+            error("Studio is already testing. Stop the existing test first.")
+        end
+        -- The user explicitly requested a test, but local preview is cleared
+        -- before starting. No test logs are sent to the daemon automatically.
+        local baseline = LogService:GetLogHistory()
+        playtestInProgress = true
+        playtestPreview = nil
+        playtestBox.Text = ""
+        local startedAt = os.time()
+        playtestInfoLabel.Text = "Test running: " .. mode ..
+            ". Stop manually using Studio's Stop button."
+        setStatus("Studio Test API started by your click. Waiting for the test to end; no logs shared.")
+        task.spawn(function()
+            local ok, errorMessage = pcall(function()
+                if mode == "play" then
+                    return StudioTestService:ExecutePlayModeAsync()
+                end
+                return StudioTestService:ExecuteRunModeAsync()
+            end)
+            local endedAt = os.time()
+            local capturedOk, report, previewText = pcall(createPlaytestPreview,
+                mode, baseline, startedAt, endedAt, ok)
+            playtestInProgress = false
+            if not capturedOk then
+                playtestPreview = nil
+                playtestInfoLabel.Text = "Test ended, but Output report collection failed."
+                setStatus("Test report error: " .. tostring(report))
+                return
+            end
+            playtestPreview = report
+            playtestBox.Text = previewText
+            local warningCount = 0
+            local errorCount = 0
+            for _, entry in ipairs(report.entries) do
+                if entry.type == "MessageWarning" then
+                    warningCount += 1
+                else
+                    errorCount += 1
+                end
+            end
+            playtestInfoLabel.Text = mode .. " API " .. report.returnState .. "; " ..
+                errorCount .. " errors, " .. warningCount .. " warnings; " ..
+                (report.historyScope == "new_suffix" and "new Output only" or "possibly older Output")
+            setStatus("Test API completed, NOT proof of passing. Review logs, then Share or Discard. " ..
+                (ok and "" or ("Local error: " .. tostring(errorMessage):sub(1, 160))))
+        end)
+    end)
+end
+
+playButton.MouseButton1Click:Connect(function()
+    launchPlaytest("play")
+end)
+
+runButton.MouseButton1Click:Connect(function()
+    launchPlaytest("run")
+end)
+
+playtestShareButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if playtestInProgress then error("Stop the test before sharing any report") end
+        if not playtestPreview then error("Run a test and preview the report first") end
+        local report = playtestPreview
+        -- Clear the local pending report before sending. If a network timeout
+        -- follows an accepted request, double-clicking cannot create duplicates.
+        playtestPreview = nil
+        local response = request("POST", "/v1/studio/playtest-report", report)
+        playtestInfoLabel.Text = "Shared report " .. response.playtestId ..
+            " / " .. response.mode .. ". Verdict: not assessed."
+        setStatus("Read-only test report shared. Call lazydev_list_playtests then lazydev_read_playtest.")
+    end)
+end)
+
+playtestClearButton.MouseButton1Click:Connect(function()
+    safeAction(function()
+        if playtestInProgress then error("Stop the test before discarding its report") end
+        playtestPreview = nil
+        playtestBox.Text = ""
+        playtestInfoLabel.Text = "Local test report discarded. Studio Output unchanged."
+        setStatus("No test report shared.")
     end)
 end)
 

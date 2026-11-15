@@ -45,10 +45,13 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.5.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.6.0' });
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/inspect') {
         return send(res, 201, state.inspect(await readJson(req)));
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/studio/playtest-report') {
+        return send(res, 201, state.inspectPlaytest(await readJson(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/diagnostics') {
         return send(res, 201, state.inspectDiagnostics(await readJson(req)));
