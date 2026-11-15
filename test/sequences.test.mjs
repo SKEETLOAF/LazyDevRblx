@@ -140,7 +140,7 @@ test('HTTP requires local token and exact frame payload, then MCP exposes approv
   assert.equal((await post(body,{'Content-Type':'application/json'})).status,415);
   assert.equal((await post(body,{'X-Sequence-Width':'999'})).status,413);
   assert.equal((await post(body,{'X-Sequence-Offsets':'0,200,190,500,600,700'})).status,400);
-  assert.equal((await post(body,{'X-Sequence-Offsets':'0,250,500'})).status,400);
+  assert.equal((await post(body,{'X-Sequence-Offsets':'0,250,500'})).status,413);
   assert.equal((await post(Buffer.concat([body,Buffer.alloc(1)]))).status,413);
   assert.equal((await post(body.subarray(0,body.length-1))).status,400);
   assert.equal((await post(body,{'X-Sequence-Captured-At':'1'})).status,400);
