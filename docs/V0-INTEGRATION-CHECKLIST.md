@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.6 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V0.7 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -72,6 +72,20 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] A shared report is accessible through `lazydev_list_playtests` and `lazydev_read_playtest`, with duration, mode, verdict, warnings and errors.
 - [ ] Restarting the daemon removes prior in-memory test reports.
 - [ ] Test on disposable place without real DataStore/external side effects; do not extrapolate runtime behavior to production.
+
+## V0.7 reviewed viewport screenshot checks (not yet executed in Studio)
+
+- [ ] Local plugin requests `StudioCaptureService` screenshot permission only after clicking Capture; denial leaves nothing ready to share.
+- [ ] Capturing a disposable viewport creates an exact local image preview in the plugin panel (EditableImage availability may vary by device/settings).
+- [ ] Image capture fails closed if preview creation, screenshot permission, or buffer conversion is unavailable.
+- [ ] Captured frame is bounded to 480×300 pixels and preserves the viewport's aspect ratio.
+- [ ] Preview alone does not send any image to the daemon. Clicking Discard clears the frozen image without changing Studio.
+- [ ] A separate, deliberate Share posts the exact previewed pixels to the authenticated localhost bridge.
+- [ ] The MCP client can list the capture and read one `image/png` content item alongside truthful metadata.
+- [ ] Studio screenshots capture visible 3D view and game UI, not unrelated application windows or the operating system desktop.
+- [ ] Missing/expired image IDs return an error, not hallucinated visuals or an auto-recapture.
+- [ ] Revoking screenshot permission prevents subsequent captures without breaking unrelated LAZY DevKit functionality.
+- [ ] Test the actual Studio-build API/security behavior for `StudioCaptureService`, `AssetService:CreateEditableImage`, and `ImageLabel.ImageContent`.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 

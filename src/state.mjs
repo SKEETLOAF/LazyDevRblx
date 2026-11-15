@@ -3,6 +3,7 @@ import { StructureStore } from './structure.mjs';
 import { SceneProposalStore, SceneInputError } from './scene.mjs';
 import { DiagnosticsStore, DiagnosticInputError } from './diagnostics.mjs';
 import { PlaytestStore, PlaytestInputError } from './playtests.mjs';
+import { ViewportStore, ViewportInputError } from './viewport.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -37,6 +38,7 @@ export class DevKitState {
     this.scene = new SceneProposalStore(this.structures);
     this.diagnostics = new DiagnosticsStore();
     this.playtests = new PlaytestStore();
+    this.viewports = new ViewportStore();
   }
 
   inspect(input) {
@@ -124,6 +126,24 @@ export class DevKitState {
     try { return this.playtests.read(requireString(id, 'playtestId', 100)); }
     catch (error) {
       if (error instanceof PlaytestInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  inspectViewport(input) {
+    try { return this.viewports.inspect(input); }
+    catch (error) {
+      if (error instanceof ViewportInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  listViewports() { return this.viewports.list(); }
+
+  readViewport(id) {
+    try { return this.viewports.read(requireString(id, 'viewportId', 100)); }
+    catch (error) {
+      if (error instanceof ViewportInputError) throw new InputError(error.message, error.status);
       throw error;
     }
   }

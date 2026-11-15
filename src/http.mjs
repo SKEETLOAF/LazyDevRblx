@@ -2,6 +2,7 @@ import http from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { InputError } from './state.mjs';
 import { handleRpc } from './mcp.mjs';
+import { VIEWPORT_MAX_BYTES, VIEWPORT_MAX_WIDTH, VIEWPORT_MAX_HEIGHT } from './viewport.mjs';
 
 const BODY_LIMIT = 350 * 1024;
 
@@ -10,6 +11,36 @@ function send(response, status, body) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   response.end(json);
+}
+
+async function readViewportPixels(request) {
+  if (request.headers['content-type']?.toLowerCase() !== 'application/octet-stream') {
+    throw new InputError('application/octet-stream required', 415);
+  }
+  const widthText=request.headers['x-viewport-width'];
+  const heightText=request.headers['x-viewport-height'];
+  if (!/^[1-9][0-9]{0,3}$/.test(widthText ?? '') ||
+      !/^[1-9][0-9]{0,3}$/.test(heightText ?? '')) {
+    throw new InputError('Invalid screenshot dimensions');
+  }
+  const width=Number(widthText),height=Number(heightText);
+  if(width>VIEWPORT_MAX_WIDTH || height>VIEWPORT_MAX_HEIGHT ||
+     width*height>VIEWPORT_MAX_BYTES/4) {
+    throw new InputError('Screenshot dimensions too large',413);
+  }
+  const expected=width*height*4;
+  const chunks=[];
+  let total=0;
+  for await(const chunk of request) {
+    total+=chunk.length;
+    if(total>expected || total>VIEWPORT_MAX_BYTES) {
+      throw new InputError('Viewport body too large',413);
+    }
+    chunks.push(chunk);
+  }
+  const pixels=Buffer.concat(chunks);
+  if(pixels.length!==expected) throw new InputError('Viewport RGBA byte length mismatch');
+  return {width,height,pixels};
 }
 
 async function readJson(request) {
@@ -45,7 +76,10 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.6.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '0.7.0' });
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/studio/viewport') {
+        return send(res, 201, state.inspectViewport(await readViewportPixels(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/inspect') {
         return send(res, 201, state.inspect(await readJson(req)));

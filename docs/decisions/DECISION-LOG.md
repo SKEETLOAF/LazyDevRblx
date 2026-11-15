@@ -31,6 +31,8 @@
 
 | D-021 | Proposed; experimentally implemented | User-clicked native StudioTestService Play/Run sessions may produce explicit, local-preview, manually shared bounded test reports. No automatic pass verdict, background playtest automation, or assumed complete log coverage. Studio execution and compatibility remain unverified. |
 
+| D-022 | Proposed; experimentally implemented | Studio viewport capture uses StudioCaptureService plugin permission, a locally displayed exact-pixel EditableImage preview, separate user-initiated sharing to a token-protected localhost bridge, and a bounded MCP PNG image response. No background/desktop capture, and new Studio API integration remains unverified. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.
