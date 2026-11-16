@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { encodeRgbaPng } from './viewport.mjs';
 import { analyzePixels } from './references.mjs';
+import { analyzeMotionCues } from './motion-cues.mjs';
 
 // A small, user-triggered series of viewport snapshots, not live video.
 // Each frame is inspected locally before one explicit upload.
@@ -95,11 +96,13 @@ export class SequenceStore {
   read(id) {
     const item=this.get(id);
     const sampleIndices=[...new Set([0,item.peakChange?.frameIndex??0,item.frameCount-1])].sort((a,b)=>a-b);
+    const motionEvidence=analyzeMotionCues(item.frames);
     return {
       metadata:this.metadata(item),
       analysis:{
         frames:item.frames.map(({png,...frame})=>({...frame})),
         keyframeIndices:sampleIndices,peakVisualChange:item.peakChange,
+        motionEvidence,
         verdict:'not_assessed',
         limitations:'Sampled viewport frames are not video or continuous motion capture. Visual change may reflect camera movement, particles, UI, or scene changes; no animation-quality verdict is inferred.',
       },
@@ -131,8 +134,10 @@ export class SequenceStore {
         sequenceMinusReference:deltaMetrics(frame,match),
       };
     });
+    const sequenceMotionEvidence=analyzeMotionCues(seq.frames);
+    const referenceMotionEvidence=analyzeMotionCues(ref.frames,{timeKey:'atMs'});
     return {
-      sequenceId,referenceId,comparisonMode:'normalized_time_nearest_reference_frame_unaligned_summary_statistics',
+      sequenceId,referenceId,sequenceMotionEvidence,referenceMotionEvidence,comparisonMode:'normalized_time_nearest_reference_frame_unaligned_summary_statistics',
       referenceDurationMs:ref.totalDurationMs,sequenceDurationMs:seq.durationMs,
       referencePeak:ref.peakChange,sequencePeak:seq.peakChange,
       matches,qualityVerdict:'not_assessed',

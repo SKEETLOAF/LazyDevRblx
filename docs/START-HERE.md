@@ -17,6 +17,7 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 11. [Phase 7 specialist interoperability](PHASE-7-SINE-AND-NATIVE-MCP.md): Read-only Sine runtime checks, official Studio MCP coexistence, Eclipse interchange and verification boundaries.
 12. [Phase 8 reference analysis](PHASE-8-REFERENCES-AND-QUALITY.md): Local still-image/GIF imports, measurable timing and visual properties, and evidence-first quality assessment.
 13. [Phase 9 temporal observation](PHASE-9-TEMPORAL-OBSERVATION.md): Deliberate six-frame Studio capture, private sequence review, and normalized-time reference comparison.
+14. [Verification audit, November 15](AUDIT-2026-11-15.md): Verified Studio evidence versus automated Node testing, current API references and fixes.
 
 Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
 
@@ -41,4 +42,4 @@ Architecture, Skeleton → Flesh → Skin roadmap, and integration research were
 
 When new evidence or testing changes a conclusion, record the evidence, update the affected decision and cross-references, and leave a brief note indicating what was superseded. Keep unresolved assumptions visible.
 
-**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** V0.3 script read/approve/Undo/Redo tested by user in Windows Studio. V0.4 Instance actions, V0.5 Output diagnostics, V0.6 Play/Run reports, and V0.7 viewport image capture/transfer and V0.8 Sine runtime inspection/official-MCP preflight and V0.9 image/GIF reference analysis and V1.0 timed viewport sequences implemented with Node tests; newer Studio UI flows and MCP image rendering remain unverified in real Studio or specific clients.
+**Design status:** Initial approved direction and proposed work are recorded in the decision log. **Build status:** V0.3 script read/approve/Undo/Redo tested by user in Windows Studio. V0.4 Instance actions, V0.5 Output diagnostics, V0.6 Play/Run reports, and V0.7 viewport image capture/transfer and V0.8 Sine runtime inspection/official-MCP preflight and V0.9 image/GIF reference analysis and V1.0 timed viewport sequences and V1.1 audit fixes and motion-change cues implemented with Node tests; newer Studio UI flows and MCP image rendering remain unverified in real Studio or specific clients.

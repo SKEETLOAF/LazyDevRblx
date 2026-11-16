@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { decodeReference, ReferenceMediaError } from './reference-media.mjs';
 import { encodeRgbaPng } from './viewport.mjs';
+import { analyzeMotionCues } from './motion-cues.mjs';
 
 const LIMIT = 6;
 const MAX_LABEL_BYTES = 100;
@@ -142,6 +143,7 @@ export class ReferenceStore {
     return {metadata:this.metadata(r),
       analysis:{
         frameMetrics:r.frames,peakVisualChange:r.peakChange,
+        motionEvidence:r.quantitativeAvailable?analyzeMotionCues(r.frames,{timeKey:'atMs'}):null,
         keyframeIndices:r.samples.map(s=>s.frameIndex),
         qualityDimensions:['silhouette/readability','color hierarchy','motion timing','impact and anticipation','effect layering','camera/context','performance'],
         qualityAssessment:'not_assessed',

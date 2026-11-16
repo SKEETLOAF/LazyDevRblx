@@ -1,15 +1,16 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.0 adds user-initiated, locally reviewed Studio viewport frame sequences, with measured timing and comparison to imported PNG/GIF references. It remains experimental, not full-motion video capture or a self-certifying visual agent.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.1 audits capture permissions and visual-change measurements, fixes cancellation and transparent-pixel correctness, and adds conservative motion-change cues. The Studio-only workflows remain experimental and are not yet installation-verified.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## What is implemented in V1.0
+## What is implemented in V1.1
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
 - Dependency-free Node.js stdio MCP server with twenty-three tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **Audit and motion-cue hardening:** capture cancellation is honored even if clicked while screenshot permission is pending or while waiting on a screenshot. The image decoder now measures **visible alpha-weighted RGB changes**, so fully transparent color changes no longer count as movement. Existing reference/sequence reads include thresholded visual-change onset, peak, possible quiet period and observed timing cadence. These are not semantic detection of impact, anticipation or recovery and carry no quality grade.
 - **Timed Studio visual observation:** a user-clicked capture of **six** sequential 3D viewport frames at a nominal 0.5s gap (actual capture-request offsets recorded). Each frame is reviewed locally before explicit Share. At most 240×160 pixels/frame are transferred, six frames total; the bridge keeps three temporary sequences and exposes real PNG keyframes plus per-frame measured change. It does not record continuously or guarantee a video frame rate.
 - **Reference-to-Studio temporal comparison:** `lazydev_compare_sequence_reference` matches the sampled sequence with a manually imported GIF or PNG at nearest normalized elapsed time, reporting color/brightness/edge statistics and temporal-change peaks. There is **no pose alignment, movement reconstruction, artistic score, or automated pass verdict**.
 - **Visual and animated references:** user-chosen local PNG, GIF, JPEG and WebP files are explicitly imported via `npm run reference:import -- "path/to/file.gif" --label "Impact reference"`. The local bridge can inspect image dimensions, samples, GIF frame durations and top visual-change beats. GIFs expose up to 3 real composited PNG keyframes; JPEG/WebP are returned as original images without claiming pixel metrics in this dependency-free implementation.
@@ -143,6 +144,14 @@ See [Phase 8 reference analysis](docs/PHASE-8-REFERENCES-AND-QUALITY.md) for for
 
 See [Phase 9 temporal observations](docs/PHASE-9-TEMPORAL-OBSERVATION.md) for the frame contract and remaining checks.
 
+## V1.1 audit and event-candidate review
+
+The code and official Roblox Creator Hub APIs were rechecked on November 15, 2026. See [Verification audit](docs/AUDIT-2026-11-15.md) for confirmed source behavior, real Studio evidence, newly corrected defects and still-open verification gates.
+
+For reference GIFs or shared Studio sequences, call the existing `lazydev_read_reference` or `lazydev_read_sequence` tool. Both now return `motionEvidence`: possible onset and highest visible-change frames, a possible low-activity interval afterward, observed frame spacing, and explicit limits. `lazydev_compare_sequence_reference` reports motion evidence from both sides separately. No new permissions or tools are needed.
+
+A peak in changed pixels can be caused by the **camera, lighting, UI, background or compression** rather than a combat impact. The agent should read the actual returned images and review the user's target before proposing an original edit. This is a visual clue, not a semantic event classifier or benchmark score.
+
 ## Safety and limitations
 
 - The session handoff file is convenient, not a credential vault. Other applications under your Windows account may read it; stop the bridge to invalidate the token, and don't use shared Windows accounts.
@@ -163,6 +172,6 @@ See [Phase 9 temporal observations](docs/PHASE-9-TEMPORAL-OBSERVATION.md) for th
 
 ## Next evidence gates
 
-Validate V0.4 scene actions, V0.5 Output sharing, V0.6 test launch/reporting, V0.7 screenshots and V0.8 Sine inspection in real Windows Studio. V0.9 reference import/metrics and V1.0 temporal-sequence contracts are Node-tested; verify actual Studio screenshot timing/UI, AI-host frame rendering, and quality review with an authorized reference. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
+Validate V0.4 scene actions, V0.5 Output sharing, V0.6 test launch/reporting, V0.7 screenshots and V0.8 Sine inspection in real Windows Studio. V0.9 reference import/metrics, V1.0 temporal contracts and V1.1 cancellation/visibility/cue regressions are Node-tested; verify actual Studio screenshot timing/UI, AI-host frame rendering, and quality review with an authorized reference. Then consider explicit game assertions, controlled multi-client testing, and user-reviewed visual diffs. Specialist plugin automation and background screen capture are not implemented.
 
 See [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md) for the data contract and verification boundaries. Don't add desktop-input automation without scoped permissions and an emergency stop.
