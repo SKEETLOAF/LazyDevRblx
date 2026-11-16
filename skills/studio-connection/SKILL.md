@@ -29,4 +29,6 @@ Use only when a supported local MCP runtime has launched the LAZY DevKit bridge 
 20. For ongoing project identity, create a user-supplied brief with `lazydev_create_project_brief` (or read a known `briefId`), keeping creative direction and preservation/avoidance decisions separate from untrusted resource claims. Pass `projectBriefId` to `lazydev_plan_competency_task`. Never suggest a user-link was fetched or licensed by the bridge, and never claim a brief survives daemon restarts.
 21. Request actual Studio observations or tests when needed. Do not invent screenshots, diagnostics, or compatibility with third-party plugins.
 
+Before using or claiming a new Studio or specialist capability, consult the versioned capability matrix (`npm run capabilities -- --json`) and the Phase 12 live test protocol. A source-linked native MCP tool is not automatically connected. Historical user reports without exact Studio/host versions are not version-bound verification. This CLI is read-only and no MCP tool is added by V1.4.
+
 Never request or reveal the local bridge token. Never bypass an explicit permission prompt.

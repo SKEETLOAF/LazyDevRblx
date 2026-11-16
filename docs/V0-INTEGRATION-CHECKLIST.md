@@ -1,5 +1,7 @@
 # LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V1.1 pending)
 
+For version-bound, evidence-linked testing and the current native/LAZY capability matrix, see [Phase 12 verification protocol](PHASE-12-CAPABILITY-VERIFICATION.md). Checkboxes below remain open until an actual test is recorded; source-code CI never closes them.
+
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
 - [ ] Local plugin opens a dock panel; no source is transmitted before explicit Inspect.
