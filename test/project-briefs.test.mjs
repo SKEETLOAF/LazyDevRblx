@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ProjectBriefStore, BriefInputError, normalizeProjectBrief } from '../src/competency/briefs.mjs';
-import { buildCompetencyPlan } from '../src/competency/engine.mjs';
+import { buildCompetencyPlan, CompetencyInputError } from '../src/competency/engine.mjs';
 import { DevKitState, InputError } from '../src/state.mjs';
 import { handleRpc } from '../src/mcp.mjs';
 import { encodeRgbaPng } from '../src/viewport.mjs';
@@ -85,7 +85,7 @@ test('brief can link existing imported image/GIF IDs but cannot invent them',()=
   assert.equal(plan.projectContext.verification,'not_independently_verified');
   assert.throws(()=>state.createProjectBrief({...brief(),referenceIds:['fake-id']}),InputError);
   assert.throws(()=>state.createCompetencyPlan({task:'animation',projectBriefId:'fake-id'}),InputError);
-  assert.throws(()=>buildCompetencyPlan({task:'animation',projectBriefId:b.briefId}),BriefInputError);
+  assert.throws(()=>buildCompetencyPlan({task:'animation',projectBriefId:b.briefId}),CompetencyInputError);
   const fresh=new DevKitState();
   assert.equal(fresh.listProjectBriefs().length,0,'Brief is only present in current daemon session');
 });
