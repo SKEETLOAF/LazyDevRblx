@@ -7,6 +7,7 @@ import { ViewportStore, ViewportInputError } from './viewport.mjs';
 import { SineStore, SineInputError } from './sine.mjs';
 import { ReferenceStore, ReferenceInputError } from './references.mjs';
 import { SequenceStore, SequenceInputError } from './sequences.mjs';
+import { CompetencyStore, CompetencyInputError, listCompetencies } from './competency/engine.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -45,6 +46,7 @@ export class DevKitState {
     this.sine = new SineStore();
     this.references = new ReferenceStore();
     this.sequences = new SequenceStore();
+    this.competencies = new CompetencyStore();
   }
 
   inspect(input) {
@@ -229,6 +231,48 @@ export class DevKitState {
     } catch(error) {
       if(error instanceof SequenceInputError) throw new InputError(error.message,error.status);
       if(error instanceof ReferenceInputError) throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  listCompetencies() { return listCompetencies(); }
+
+  createCompetencyPlan(input) {
+    try { return this.competencies.create(input); }
+    catch(error) {
+      if(error instanceof CompetencyInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  listCompetencyPlans() { return this.competencies.list(); }
+
+  readCompetencyPlan(id) {
+    try { return this.competencies.read(requireString(id,'planId',100)); }
+    catch(error) {
+      if(error instanceof CompetencyInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  competencyEvidencePresent(kind,id) {
+    if(kind==='structure')return this.structures.observations.has(id);
+    if(kind==='viewport')return this.viewports.frames.has(id);
+    if(kind==='sequence')return this.sequences.items.has(id);
+    if(kind==='reference')return this.references.references.has(id);
+    if(kind==='playtest')return this.playtests.reports.has(id);
+    if(kind==='diagnostics')return this.diagnostics.observations.has(id);
+    if(kind==='observation'){
+      const item=this.snapshots.get(id);
+      return !!item&&this.latestByInstance.get(item.instanceId)===id;
+    }
+    return false;
+  }
+
+  assessCompetencyPlan(input) {
+    try { return this.competencies.assess(input,(kind,id)=>this.competencyEvidencePresent(kind,id)); }
+    catch(error) {
+      if(error instanceof CompetencyInputError)throw new InputError(error.message,error.status);
       throw error;
     }
   }

@@ -44,6 +44,10 @@
 | D-028 | Source-audited and Node-tested in V1.1; Studio runtime pending | Cancellation must remain authoritative while the Studio screenshot permission request or screenshot capture is pending. A mid-permission cancel had been overwritten by resetting the flag after the yielding prompt; patch and static regression test cover this ordering. |
 | D-029 | Source-audited and Node-tested in V1.1 | Pixel-change fractions must reflect *visible* premultiplied RGBA, not unseen RGB changes at zero alpha. Motion change onset/peak/quiet are thresholded evidence, never automatic semantic event or quality verdict. |
 
+| D-030 | Implemented experimentally in V1.2 | Competency routing selects from eight development disciplines using explicit inputs or disclosed keyword inference. Plans distinguish art-direction constraints and maintainable object-group responsibilities from mesh welding or automatic asset creation. Portable skill descriptions are instructional, not claims of installed specialist-app control. |
+| D-031 | Implemented as evidence-only in V1.2 | Quality gates distinguish missing evidence, stored evidence available for inspection, and currently unavailable audio/performance/device/gameplay telemetry. Presence of evidence never automatically certifies an artistic, functional or security requirement. |
+| D-032 | Implemented as curated source catalog in V1.2 | Skill plans include links to official Roblox Creator Hub documentation with provenance and an explicit 2026-11-16 check date. No live search, license grant, downloaded templates or unverified third-party integration is implied. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.
