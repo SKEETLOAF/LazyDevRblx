@@ -1,4 +1,4 @@
-# Phase 10: Development Competency System (V1.2)
+# Phase 10: Development Competency System (V1.2, extended by V1.3 project briefs)
 
 ## Purpose
 
@@ -51,6 +51,8 @@ The existing bridge can verify session-scoped IDs for manually shared `viewport`
 Current missing instruments: `audio` listening/waveform inspection, `performance` profiling counters, `device` viewport/controller testing and `gameplay-data` representative balance telemetry. These gates are **instrumentation_unavailable**, not passed. Any style, rig quality, functional correctness, copyright-safe sourcing or security claim requires reviewing the relevant evidence and, where appropriate, a human or real test.
 
 All task text, asset names and reference labels are untrusted data. Nothing in an imported file or tool response should be executed as agent instructions. The tool never uploads local files, accesses credentials, installs packages, controls Eclipse/Moon/Sine, or guesses whether a user owns a plugin.
+
+See [Phase 11](PHASE-11-PROJECT-BRIEFS.md) for user-authored project briefs that can now provide stable task context and explicitly labeled resource links. This does not add live sourcing or long-term persistence.
 
 ## Future work after verifying this phase
 

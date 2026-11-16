@@ -72,20 +72,31 @@ export function listCompetencies(){
   };
 }
 
-export function buildCompetencyPlan(input){
-  checkKeys(input,['task','disciplines','style','assetKind','styleNotes']);
+export function buildCompetencyPlan(input,resolveBrief=null){
+  checkKeys(input,['task','disciplines','style','assetKind','styleNotes','projectBriefId']);
+  const projectBriefId=input.projectBriefId===undefined?null:str(input.projectBriefId,'projectBriefId',100);
+  if(projectBriefId&&!resolveBrief)fail('An active project brief store is required for projectBriefId');
+  const brief=projectBriefId?resolveBrief(projectBriefId):null;
   const task=str(input.task,'task',1600);
   const {ids:inferred,matchedTerms,confidence}=inferredDisciplines(task);
   const selection=input.disciplines===undefined?inferred:
     uniqueArray(input.disciplines,SKILL_IDS,'disciplines',8);
   const selected=COMPETENCIES.filter(x=>selection.includes(x.id));
-  const styleId=input.style===undefined?'unspecified':enumVal(input.style,STYLES_SET,'style');
+  const styleId=input.style===undefined?(brief?.style??'unspecified'):enumVal(input.style,STYLES_SET,'style');
   const assetId=input.assetKind===undefined?inferAssetKind(task):enumVal(input.assetKind,ASSETS_SET,'assetKind');
   const styleNotes=input.styleNotes===undefined?null:str(input.styleNotes,'styleNotes',400);
   const style=STYLES[styleId];
   const asset=ASSET_KINDS[assetId];
   const resourceIds=[...new Set(selected.flatMap(x=>x.resourceIds))];
   const resources=resourceIds.map(id=>({id,...SOURCES[id]}));
+  if(brief){
+    brief.sourceLinks.forEach((link,i)=>resources.push({
+      id:'user:'+i,title:link.title,url:link.url,why:link.note??'Project-supplied resource for human or agent review',
+      type:link.kind,publisher:'user_supplied',rightsClaim:link.rightsClaim,
+      provenance:'user_supplied_link',retrievalStatus:'not_fetched',
+      rightsVerification:'not_independently_verified',
+    }));
+  }
   const gates=selected.flatMap(x=>x.gates.map(g=>({
     ...g,discipline:x.id,
     missingInfrastructure:g.requiredKinds.filter(kind=>!EVIDENCE_SET.has(kind)),
@@ -106,8 +117,21 @@ export function buildCompetencyPlan(input){
       suggestedResponsibilities:[...asset.components],designRules:[...asset.guidance],
       caveat:'A proposed ownership hierarchy, not an instruction to merge parts or force one mesh per item.',
     },
+    projectContext:brief?{
+      briefId:brief.briefId,projectName:brief.projectName,
+      creativeDirection:brief.creativeDirection,
+      preserve:[...brief.preserve],avoid:[...brief.avoid],
+      constraints:[...brief.constraints],
+      referenceIds:[...brief.referenceIds],
+      sourceLinkCount:brief.sourceLinks.length,
+      provenance:'developer_supplied',verification:'not_independently_verified',
+      warning:'This brief is task context only; imported reference IDs and URLs are not proof of fidelity, ownership or license clearance.',
+    }:null,
     artDirection:{
-      id:styleId,label:style.label,notes:styleNotes,
+      id:styleId,label:style.label,
+      notes:styleNotes??brief?.creativeDirection??null,
+      notesSource:styleNotes?'explicit_task':brief?.creativeDirection?'project_brief':'none',
+      styleSource:input.style===undefined?(brief?'project_brief':'unspecified'):'explicit_task',
       principles:[...style.principles],avoid:[...style.avoid],
       status:styleId==='unspecified'?'needs_user_or_project_reference':'proposed_profile_requires_project_validation',
     },
@@ -118,8 +142,9 @@ export function buildCompetencyPlan(input){
     })),
     sources:resources,
     resourcePolicy:{
-      checkedOn:'2026-11-16',mode:'curated_offline',liveAvailability:'not_checked_at_request_time',
-      note:'Official documentation only; these links are not retrieved at execution time. Refresh sources before relying on changing APIs. No third-party assets were downloaded or licensed.',
+      checkedOn:'2026-11-16',mode:brief&&brief.sourceLinks.length?'curated_plus_user_declared':'curated_offline',
+      liveAvailability:'not_checked_at_request_time',
+      note:'Official documentation is curated offline; project links are user-declared and NEVER fetched or license-verified. Refresh changing API claims before use. No assets were downloaded or licensed.',
     },
     qualityGates:gates,
     completionPolicy:'No gate passes because a source was listed or an agent asserts success. Evidence presence only makes a gate ready for human/agent review. Unsupported evidence kinds remain blocked; no final quality score.',
@@ -127,11 +152,11 @@ export function buildCompetencyPlan(input){
 }
 
 export class CompetencyStore {
-  constructor(){this.plans=new Map();}
+  constructor(resolveBrief=null){this.plans=new Map();this.resolveBrief=resolveBrief;}
   create(input){
     const plan={
       planId:randomUUID(),createdAt:new Date().toISOString(),
-      ...buildCompetencyPlan(input),
+      ...buildCompetencyPlan(input,this.resolveBrief),
     };
     this.plans.set(plan.planId,plan);
     while(this.plans.size>MAX_PLANS)this.plans.delete(this.plans.keys().next().value);

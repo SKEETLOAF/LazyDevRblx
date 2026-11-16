@@ -48,6 +48,8 @@
 | D-031 | Implemented as evidence-only in V1.2 | Quality gates distinguish missing evidence, stored evidence available for inspection, and currently unavailable audio/performance/device/gameplay telemetry. Presence of evidence never automatically certifies an artistic, functional or security requirement. |
 | D-032 | Implemented as curated source catalog in V1.2 | Skill plans include links to official Roblox Creator Hub documentation with provenance and an explicit 2026-11-16 check date. No live search, license grant, downloaded templates or unverified third-party integration is implied. |
 
+| D-033 | Implemented experimentally in V1.3 | Explicit user-authored, ephemeral project briefs can inform multiple competency plans without rewriting a game's identity. Preserve/avoid rules, art-direction notes, constraints and linked imported media stay distinct from per-task overrides. URLs and rights claims are user-supplied and not independently verified. No automatic project scrape, remote fetch, or permanent memory is implied. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

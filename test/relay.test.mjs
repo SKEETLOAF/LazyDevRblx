@@ -54,7 +54,7 @@ test('two MCP stdio clients share one HTTP daemon and its Studio observations', 
   const initial=await a.results();
   assert.equal(initial.length,2);
   assert.equal(initial[0].result.protocolVersion,'2025-06-18');
-  assert.equal(initial[1].result.tools.length,27);
+  assert.equal(initial[1].result.tools.length,30);
   const inspect=await fetch('http://127.0.0.1:'+server.address().port+'/v1/studio/inspect-tree',{
     method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
     body:JSON.stringify(item),
@@ -121,7 +121,7 @@ test('localhost MCP endpoint rejects unauthenticated and browser-origin calls', 
   assert.equal((await run({Authorization:'Bearer '+token,Origin:'http://example.test'})).status,403);
   const good=await run({Authorization:'Bearer '+token});
   assert.equal(good.status,200);
-  assert.equal((await good.json()).reply.result.tools.length,27);
+  assert.equal((await good.json()).reply.result.tools.length,30);
 });
 
 test('portable manifest launches shared relay, not a second Studio daemon', () => {
