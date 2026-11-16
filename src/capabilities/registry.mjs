@@ -82,6 +82,6 @@ export function getCapabilityMatrix(){
         versionBoundHostVerified:false,
       },
     })),
-    warning:'Test files and historical user reports are pointers, not an independent proof of current Studio compatibility. Native documented tools are not necessarily connected, approved or working in this environment.',
+    warning:'This inventory is not a live Studio probe. Test files and historical user reports are pointers, not independent proof of current Studio compatibility. Native documented tools are not necessarily connected, approved or working in this environment.',
   };
 }

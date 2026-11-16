@@ -26,7 +26,7 @@ test('registry contains native-first vs LAZY specialist vs unsupported specialis
   assert.equal(map.get('studio.script.edit').route,'native_first');
   assert.equal(map.get('studio.viewport.sequence').route,'lazy_specialist');
   assert.equal(map.get('competency.evidence').route,'lazy_specialist');
-  assert.equal(map.get('native.asset.generate').implemented,false);
+  assert.equal(map.get('native.generate.asset').implemented,false);
   assert.equal(map.get('external.eclipse.editor').route,'unavailable');
   assert.equal(map.get('external.moon.editor').implemented,false);
 });
