@@ -1,10 +1,10 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.2 introduces executable cross-disciplinary skill routing, curated development references, art-direction and asset-boundary planning, and evidence-presence quality gates. It does not yet automate Blender, Sine, Eclipse or audio editors, and most Studio UI flows still need runtime verification.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.3 adds explicit reusable, session-local project briefs to the competency coordinator, preserving developer-approved creative direction, constraints, reference IDs, and transparently labeled source links. Specialist-app control and most newer Studio UI flows remain unverified.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
-## Cross-disciplinary competency system (V1.2)
+## Cross-disciplinary competency system (V1.3)
 
 LAZY DevKit now exposes eight development competencies: **modeling, building, animation, VFX, SFX, UI/HUD, Luau scripting, and game design**. Use it without Studio to plan how a deliverable should be built, what should remain independently editable, what official references to consult, which Roblox art-language principles apply and what evidence is missing.
 
@@ -18,12 +18,23 @@ With the shared MCP daemon running, use `lazydev_list_competencies`, `lazydev_pl
 
 Nine portable `SKILL.md` files cover the shared development workflow and eight disciplines. See [Phase 10 competence, sourcing and quality](docs/PHASE-10-COMPETENCY-SYSTEM.md). Resources are curated Roblox Creator Hub documentation links checked on 2026-11-16, **not live search results** or third-party assets with transferable licenses. Project-specific references and art styles remain developer-authorized.
 
-## What is implemented in V1.2
+## Session-local project briefs (V1.3)
+
+A developer or trusted agent can deliberately create a brief through `lazydev_create_project_brief`, then use `lazydev_list_project_briefs` and `lazydev_read_project_brief`. The brief contains a project name, optional style and direction, lists of constraints, things to preserve/avoid, already-imported reference IDs, and explicit HTTPS reading/resource links. The tools do not read game files, download links, create assets, or modify Studio.
+
+Pass the returned `briefId` as `projectBriefId` to `lazydev_plan_competency_task`. The plan retains a frozen copy of the brief's direction and constraints. Explicit per-task `style` and `styleNotes` take precedence over brief defaults, without editing the brief.
+
+Imported reference IDs must actually exist in the current local bridge when the brief is created. User-entered links are labeled **user supplied, not fetched and not license verified** even when somebody claims permission. Briefs (last 16) are stored only in the running daemon; restart clears them. This is a limited context foundation, not long-term memory or an automatic search engine.
+
+See [Phase 11 project briefs and resource provenance](docs/PHASE-11-PROJECT-BRIEFS.md) for examples and limitations.
+
+## What is implemented in V1.3
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
-- Dependency-free Node.js stdio MCP server with twenty-seven tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- Dependency-free Node.js stdio MCP server with thirty tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **Reusable project briefs:** explicit per-project creative direction, preservation rules, constraints, imported reference IDs and source-link provenance feed subsequent plans without silently replacing user decisions.
 - **Competency planning and evidence checks:** task-specific methods/anti-patterns, art style profiles, suggested asset ownership boundaries, official sources and a multi-discipline quality rubric. Current tools can check retained evidence IDs but cannot grade art or claim unavailable audio/performance tests passed.
 - **Audit and motion-cue hardening:** capture cancellation is honored even if clicked while screenshot permission is pending or while waiting on a screenshot. The image decoder now measures **visible alpha-weighted RGB changes**, so fully transparent color changes no longer count as movement. Existing reference/sequence reads include thresholded visual-change onset, peak, possible quiet period and observed timing cadence. These are not semantic detection of impact, anticipation or recovery and carry no quality grade.
 - **Timed Studio visual observation:** a user-clicked capture of **six** sequential 3D viewport frames at a nominal 0.5s gap (actual capture-request offsets recorded). Each frame is reviewed locally before explicit Share. At most 240×160 pixels/frame are transferred, six frames total; the bridge keeps three temporary sequences and exposes real PNG keyframes plus per-frame measured change. It does not record continuously or guarantee a video frame rate.

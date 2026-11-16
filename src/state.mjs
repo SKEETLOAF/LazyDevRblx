@@ -8,6 +8,7 @@ import { SineStore, SineInputError } from './sine.mjs';
 import { ReferenceStore, ReferenceInputError } from './references.mjs';
 import { SequenceStore, SequenceInputError } from './sequences.mjs';
 import { CompetencyStore, CompetencyInputError, listCompetencies } from './competency/engine.mjs';
+import { ProjectBriefStore, BriefInputError } from './competency/briefs.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -46,7 +47,8 @@ export class DevKitState {
     this.sine = new SineStore();
     this.references = new ReferenceStore();
     this.sequences = new SequenceStore();
-    this.competencies = new CompetencyStore();
+    this.briefs = new ProjectBriefStore(id=>this.references.references.has(id));
+    this.competencies = new CompetencyStore(id=>this.briefs.read(id));
   }
 
   inspect(input) {
@@ -235,12 +237,30 @@ export class DevKitState {
     }
   }
 
+  createProjectBrief(input) {
+    try { return this.briefs.create(input); }
+    catch(error) {
+      if(error instanceof BriefInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
+  listProjectBriefs() { return this.briefs.list(); }
+
+  readProjectBrief(id) {
+    try { return this.briefs.read(requireString(id,'briefId',100)); }
+    catch(error) {
+      if(error instanceof BriefInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
   listCompetencies() { return listCompetencies(); }
 
   createCompetencyPlan(input) {
     try { return this.competencies.create(input); }
     catch(error) {
-      if(error instanceof CompetencyInputError)throw new InputError(error.message,error.status);
+      if(error instanceof CompetencyInputError||error instanceof BriefInputError)throw new InputError(error.message,error.status);
       throw error;
     }
   }
@@ -250,7 +270,7 @@ export class DevKitState {
   readCompetencyPlan(id) {
     try { return this.competencies.read(requireString(id,'planId',100)); }
     catch(error) {
-      if(error instanceof CompetencyInputError)throw new InputError(error.message,error.status);
+      if(error instanceof CompetencyInputError||error instanceof BriefInputError)throw new InputError(error.message,error.status);
       throw error;
     }
   }
@@ -272,7 +292,7 @@ export class DevKitState {
   assessCompetencyPlan(input) {
     try { return this.competencies.assess(input,(kind,id)=>this.competencyEvidencePresent(kind,id)); }
     catch(error) {
-      if(error instanceof CompetencyInputError)throw new InputError(error.message,error.status);
+      if(error instanceof CompetencyInputError||error instanceof BriefInputError)throw new InputError(error.message,error.status);
       throw error;
     }
   }

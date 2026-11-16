@@ -18,6 +18,8 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 12. [Phase 8 reference analysis](PHASE-8-REFERENCES-AND-QUALITY.md): Local still-image/GIF imports, measurable timing and visual properties, and evidence-first quality assessment.
 13. [Phase 9 temporal observation](PHASE-9-TEMPORAL-OBSERVATION.md): Deliberate six-frame Studio capture, private sequence review, and normalized-time reference comparison.
 14. [Verification audit, November 15](AUDIT-2026-11-15.md): Verified Studio evidence versus automated Node testing, current API references and fixes.
+15. [Phase 10 development competency](PHASE-10-COMPETENCY-SYSTEM.md): Skills, curated sources and evidence-only quality gates.
+16. [Phase 11 project briefs](PHASE-11-PROJECT-BRIEFS.md): Developer-supplied creative constraints and source provenance preserved across task plans in one daemon session.
 15. [Phase 10 Development Competency System](PHASE-10-COMPETENCY-SYSTEM.md): Eight domain skills, task routing, cited source catalog, editable asset boundaries and evidence-only quality review.
 
 Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
