@@ -50,6 +50,8 @@
 
 | D-033 | Implemented experimentally in V1.3 | Explicit user-authored, ephemeral project briefs can inform multiple competency plans without rewriting a game's identity. Preserve/avoid rules, art-direction notes, constraints and linked imported media stay distinct from per-task overrides. URLs and rights claims are user-supplied and not independently verified. No automatic project scrape, remote fetch, or permanent memory is implied. |
 
+| D-034 | Implemented experimentally in V1.4 | Use a source-linked capability matrix that distinguishes implemented, declared Node tests, historical user reports, and exact-version Studio/host verification. Prefer native Studio MCP for overlapping documented actions, keep specialized LAZY review/evidence separate, and never promote a user-filled or syntactically valid verification record to a verified status without reviewing proof. No new control privileges. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

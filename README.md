@@ -1,8 +1,22 @@
 # LAZY DevKit
 
-A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.3 adds explicit reusable, session-local project briefs to the competency coordinator, preserving developer-approved creative direction, constraints, reference IDs, and transparently labeled source links. Specialist-app control and most newer Studio UI flows remain unverified.**
+A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.4 adds a source-linked, read-only capability inventory and a strict schema for recording Studio integration-test claims. It separates historical user tests from version-bound verification, and recognizes documented native Roblox Studio MCP tools without pretending they are connected. Most V0.4-and-later Studio UI flows remain unverified.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
+
+## Verified-capability roadmap (V1.4)
+
+Before adding broader automation, inspect the explicit implementation and verification matrix:
+
+```sh
+npm run capabilities
+npm run capabilities -- --json
+npm run capabilities -- --validate
+```
+
+This is a **read-only catalog**, not a Studio probe. It shows native-first routes, LAZY-specific work and experimental/unsupported specialist integrations. Every entry separately describes implementation, declared Node tests, old user reports and missing version-bound live Studio/host verification. A green CI run does not automatically change those last two fields. The catalog now tracks documented native Studio MCP features as candidates for direct native use instead of duplicating them.
+
+[Phase 12: verification and native MCP convergence](docs/PHASE-12-CAPABILITY-VERIFICATION.md) includes the machine-readable field contract and a disposable-place Studio test protocol. No token, project file or local Studio environment is accessed by this command.
 
 ## Cross-disciplinary competency system (V1.3)
 
@@ -28,12 +42,13 @@ Imported reference IDs must actually exist in the current local bridge when the 
 
 See [Phase 11 project briefs and resource provenance](docs/PHASE-11-PROJECT-BRIEFS.md) for examples and limitations.
 
-## What is implemented in V1.3
+## What is implemented through V1.4
 
 - Portable local MCP packaging and connection instructions for ChatGPT Desktop, Claude Desktop, Claude Code, and Codex. **A user verified a ChatGPT-to-Studio inspection and script edit using V0.3; Claude/Codex and the new V0.4 Instance actions remain unverified in actual client sessions.**
 - One persistent localhost Studio daemon, plus independent lightweight stdio clients. Supported ChatGPT, Claude and Codex clients can read the **same opt-in observations** without competing for the Studio port.
 - A private per-user token handoff for local clients. Run `npm run session` to view the active token locally; never share it with an AI.
 - Dependency-free Node.js stdio MCP server with thirty tools: list/read Studio snapshots, propose/review script edits, propose/review narrowly restricted Instance actions, and check reported status. list/read opted-in script snapshots, propose whole-source or exact-span changes, check proposal status, and list/read bounded Studio hierarchy snapshots.
+- **Read-only capability/verification matrix:** native MCP capabilities, LAZY overlaps, conservative verification status, test pointers and a strict human-submitted evidence-record schema. No new privileged Studio tool endpoints.
 - **Reusable project briefs:** explicit per-project creative direction, preservation rules, constraints, imported reference IDs and source-link provenance feed subsequent plans without silently replacing user decisions.
 - **Competency planning and evidence checks:** task-specific methods/anti-patterns, art style profiles, suggested asset ownership boundaries, official sources and a multi-discipline quality rubric. Current tools can check retained evidence IDs but cannot grade art or claim unavailable audio/performance tests passed.
 - **Audit and motion-cue hardening:** capture cancellation is honored even if clicked while screenshot permission is pending or while waiting on a screenshot. The image decoder now measures **visible alpha-weighted RGB changes**, so fully transparent color changes no longer count as movement. Existing reference/sequence reads include thresholded visual-change onset, peak, possible quiet period and observed timing cadence. These are not semantic detection of impact, anticipation or recovery and carry no quality grade.
