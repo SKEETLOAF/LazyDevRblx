@@ -41,6 +41,9 @@
 
 | D-027 | Accepted direction; experimentally implemented in V1.0 | Visual motion observation should use bounded user-started Studio screenshot sequences, local review of every frame and one explicit share. Record actual capture-request offsets, not promised frame rate. Compare to imported GIFs using normalized time and measured image evidence, never fabricated event alignment or quality grades. |
 
+| D-028 | Source-audited and Node-tested in V1.1; Studio runtime pending | Cancellation must remain authoritative while the Studio screenshot permission request or screenshot capture is pending. A mid-permission cancel had been overwritten by resetting the flag after the yielding prompt; patch and static regression test cover this ordering. |
+| D-029 | Source-audited and Node-tested in V1.1 | Pixel-change fractions must reflect *visible* premultiplied RGBA, not unseen RGB changes at zero alpha. Motion change onset/peak/quiet are thresholded evidence, never automatic semantic event or quality verdict. |
+
 ## Open technical questions
 
 - Which specific existing AI hosts can actually invoke local MCP services in their supported client environments? Test each, do not infer from marketing.

@@ -1,4 +1,4 @@
-# Phase 9: Opt-in temporal viewport observation (V1.0 experimental)
+# Phase 9: Opt-in temporal viewport observation (V1.0 experimental, V1.1 corrections)
 
 ## Purpose
 
@@ -41,6 +41,14 @@ For useful iteration, set a developer-approved visual target, compare roughly eq
 - **Performance/accessibility:** actual device/Studio microprofiler data, particle counts, flashing or excessive shake when such evidence is available
 
 An AI review must separate *observed frames*, *measured differences*, *inferred implementation*, *unknown timing/poses* and *recommended revisions*. No hidden reference assets, rigs, particle settings, source files or plugin project files are recovered from video pixels.
+
+## November 15, 2026 audit corrections (V1.1)
+
+- Sequence cancellation is now set before the yielding Roblox screenshot-permission prompt and checked after it returns. A user cancellation during that prompt no longer gets accidentally reset by starting the recording.
+- Pending screenshot-buffer waits check the same cancellation flag. The plugin is therefore designed to abort between permission, capture, and resampling; runtime validation is still needed.
+- Both GIF and Studio sequence pixel-change measurements use **alpha-premultiplied RGB**, eliminating false activity from RGB variations in completely transparent pixels.
+- Analysis adds **threshold-based candidate onset, peak-change and quiet-after-peak** and observed cadence. These cues are *not* anticipation, impact, attack or recovery detectors. A 6-frame sample is classified as very limited evidence and should be visually inspected.
+- No new arbitrary camera, native input or specialist editor permissions are added. Read-only MCP outputs remain on the existing approved media paths.
 
 ## Verification
 

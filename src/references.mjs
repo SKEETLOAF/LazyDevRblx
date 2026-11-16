@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { decodeReference, ReferenceMediaError } from './reference-media.mjs';
 import { encodeRgbaPng } from './viewport.mjs';
+import { analyzeMotionCues } from './motion-cues.mjs';
 
 const LIMIT = 6;
 const MAX_LABEL_BYTES = 100;
@@ -48,8 +49,11 @@ export function analyzePixels(pixels,width,height,previous=null) {
     cells[cell].sum+=Y;cells[cell].count++;
     if(previous){
       const p=previous[i+3]/255;
-      const diff=(Math.abs(pixels[i]-previous[i])+Math.abs(pixels[i+1]-previous[i+1])+
-        Math.abs(pixels[i+2]-previous[i+2]))/(3*255);
+      // Compare visible premultiplied RGB. Fully transparent pixels may
+      // contain arbitrary hidden colors, which cannot be counted as motion.
+      const diff=(Math.abs(pixels[i]*a-previous[i]*p)+
+        Math.abs(pixels[i+1]*a-previous[i+1]*p)+
+        Math.abs(pixels[i+2]*a-previous[i+2]*p))/(3*255);
       if(Math.abs(a-p)>0.15 || diff>0.15)changes++;
       compareCount++;
     }
@@ -142,6 +146,7 @@ export class ReferenceStore {
     return {metadata:this.metadata(r),
       analysis:{
         frameMetrics:r.frames,peakVisualChange:r.peakChange,
+        motionEvidence:r.quantitativeAvailable?analyzeMotionCues(r.frames,{timeKey:'atMs'}):null,
         keyframeIndices:r.samples.map(s=>s.frameIndex),
         qualityDimensions:['silhouette/readability','color hierarchy','motion timing','impact and anticipation','effect layering','camera/context','performance'],
         qualityAssessment:'not_assessed',

@@ -1,4 +1,4 @@
-# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V1.0 pending)
+# LAZY DevKit Studio integration verification (V0.3 tested; V0.4–V1.1 pending)
 
 Record Studio version, OS, plugin installation method, date, and evidence for each test. Do not mark a check as passed based only on Node tests.
 
@@ -127,6 +127,15 @@ Record Studio version, OS, plugin installation method, date, and evidence for ea
 - [ ] With an imported GIF, `lazydev_compare_sequence_reference` returns relative-time nearest frame pairs and no fabricated quality verdict.
 - [ ] Studio Play/Run recording behavior is checked separately; no claims of client viewport access without evidence.
 - [ ] No game scripts, native Studio actions or third-party Sine/Eclipse plugin controls are triggered by the sequence capture.
+
+## V1.1 audit/cancellation and pixel metrics (requires real Studio checks)
+
+- [ ] Start a six-frame capture and click Cancel **while the screenshot-permission request is pending**; verify nothing captures or shares after permission returns.
+- [ ] During a screenshot in Pending state, click Cancel; verify the capture stops without an approved series and does not restart.
+- [ ] After successful six-frame capture, review/approve and ensure every actual pixel is still identical to what was previewed.
+- [ ] A fully transparent pixel changing only RGB creates **zero** visible-change fraction; opaque pixel changes register normally (automated tests cover this, Studio observation pending).
+- [ ] Motion cues label measurable pixel activity, not semantic animation events; camera pan, UI changes, or light shifts are reported as potential false positives.
+- [ ] Ensure Studio version supports required capture APIs, screenshot permission, EditableImage preview and Undo/Redo; static source regression tests **do not prove** real Studio behavior.
 
 ## Evidence recorded from first real Windows Studio session (2026-11-14)
 

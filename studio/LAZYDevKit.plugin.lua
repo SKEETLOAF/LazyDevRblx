@@ -204,10 +204,11 @@ local function clearViewportPreview()
     viewportImage.ImageContent = Content.none
 end
 
-local function waitForCapture(capture)
-    -- BufferStatus is populated asynchronously; never call GetBuffer until
-    -- ready. A bounded wait avoids hanging the Studio plugin indefinitely.
+local function waitForCapture(capture, shouldCancel)
+    -- BufferStatus is populated asynchronously. Sequence cancellation must
+    -- also work while waiting for a pending screenshot.
     for _ = 1, 120 do
+        if shouldCancel and shouldCancel() then error("Sequence capture cancelled") end
         if capture.BufferStatus == Enum.StudioCaptureBufferStatus.Ready then
             return
         end
@@ -357,12 +358,18 @@ sequenceCaptureButton.MouseButton1Click:Connect(function()
     safeAction(function()
         if sequenceRecording then error("A sequence capture is already running") end
         clearSequence()
+        sequenceCancel = false
         local granted = StudioCaptureService:RequestScreenshotPermissionAsync()
+        -- Discard remains authoritative if clicked while Roblox's permission
+        -- dialog is open. Never reset this flag after a yielding prompt.
+        if sequenceCancel then
+            sequenceInfoLabel.Text = "Sequence cancelled during permission request."
+            return
+        end
         if not granted or not StudioCaptureService:CanCaptureScreenshot() then
             error("Studio screenshot permission denied or active viewport unavailable")
         end
         sequenceRecording = true
-        sequenceCancel = false
         sequenceInfoLabel.Text = "Capturing up to 6 frames. Click Cancel to stop."
         task.spawn(function()
             local ok, failure = pcall(function()
@@ -382,7 +389,7 @@ sequenceCaptureButton.MouseButton1Click:Connect(function()
                         Format = Enum.StudioCaptureScreenshotFormat.RGBA8,
                         UICaptureMode = Enum.UICaptureMode.All,
                     })
-                    waitForCapture(capture)
+                    waitForCapture(capture, function() return sequenceCancel end)
                     local original = capture.Resolution
                     if original.X < 1 or original.Y < 1 then
                         error("Invalid Studio screenshot resolution")
@@ -401,7 +408,7 @@ sequenceCaptureButton.MouseButton1Click:Connect(function()
                     if original.X ~= targetW or original.Y ~= targetH then
                         capture = capture:ScaleAsync(Enum.ResamplerMode.Default,
                             Vector2.new(targetW, targetH))
-                        waitForCapture(capture)
+                        waitForCapture(capture, function() return sequenceCancel end)
                     end
                     local pixels = capture:GetBuffer()
                     if buffer.len(pixels) ~= targetW * targetH * 4 then
