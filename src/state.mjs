@@ -10,6 +10,7 @@ import { SequenceStore, SequenceInputError } from './sequences.mjs';
 import { CompetencyStore, CompetencyInputError, listCompetencies } from './competency/engine.mjs';
 import { ProjectBriefStore, BriefInputError } from './competency/briefs.mjs';
 import {listKnowledge,retrieveKnowledge,listBenchmarks,planBenchmark,KnowledgeInputError} from './knowledge/engine.mjs';
+import {BenchmarkEvidenceStore,BenchmarkEvidenceError} from './knowledge/runs.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -50,6 +51,7 @@ export class DevKitState {
     this.sequences = new SequenceStore();
     this.briefs = new ProjectBriefStore(id=>this.references.references.has(id));
     this.competencies = new CompetencyStore(id=>this.briefs.read(id));
+    this.benchmarkRuns = new BenchmarkEvidenceStore((kind,id)=>this.competencyEvidencePresent(kind,id));
   }
 
   inspect(input) {
@@ -269,6 +271,9 @@ export class DevKitState {
   listKnowledge() { return listKnowledge(); }
   queryKnowledge(args) { try {return retrieveKnowledge(args);} catch(e){if(e instanceof KnowledgeInputError)throw new InputError(e.message);throw e;} }
   listBenchmarks() { return listBenchmarks(); }
+  recordBenchmarkRun(args) { try{return this.benchmarkRuns.record(args);}catch(e){if(e instanceof BenchmarkEvidenceError)throw new InputError(e.message);throw e;} }
+  listBenchmarkRuns() { return this.benchmarkRuns.list(); }
+  compareBenchmarkRuns(args) { try{return this.benchmarkRuns.compare(args);}catch(e){if(e instanceof BenchmarkEvidenceError)throw new InputError(e.message);throw e;} }
   planBenchmark(args) { try {return planBenchmark(args);} catch(e){if(e instanceof KnowledgeInputError)throw new InputError(e.message);throw e;} }
 
   listCompetencyPlans() { return this.competencies.list(); }

@@ -1,5 +1,5 @@
 // Declarative inventory only. This module never connects to Studio or executes tools.
-export const REGISTRY_VERSION='2026-11-17.1';
+export const REGISTRY_VERSION='2026-11-17.2';
 const NATIVE='https://create.roblox.com/docs/studio/mcp';
 const TEST='https://create.roblox.com/docs/reference/engine/classes/StudioTestService';
 const OWN='https://github.com/SKEETLOAF/LazyDevRblx';
@@ -43,6 +43,8 @@ export const CAPABILITIES=Object.freeze([
     ['test/knowledge.test.mjs'],OWN+'/blob/main/docs/PHASE-13-KNOWLEDGE-BENCHMARKS.md',null,'Metadata, not live fetched'),
   d('benchmark.plan','Controlled benchmark planning','lazy','lazy_specialist','read_only',true,
     ['test/knowledge.test.mjs'],OWN+'/blob/main/docs/PHASE-13-KNOWLEDGE-BENCHMARKS.md',null,'Experiments not run'),
+  d('benchmark.evidence','Operator-linked benchmark evidence ledger','lazy','lazy_specialist','read_only',true,
+    ['test/benchmark-runs.test.mjs'],OWN+'/blob/main/docs/PHASE-14-BENCHMARK-EVIDENCE.md',null,'Session-local and not independently verified'),
   d('project.brief','Session-local project direction','lazy','lazy_specialist','read_only',true,
     ['test/project-briefs.test.mjs'],OWN+'/blob/main/docs/PHASE-11-PROJECT-BRIEFS.md',null,'Not persistent across daemon restarts'),
   d('native.execute.luau','Native Luau execution','native','native_first','execute_code',false,[],NATIVE,null,'Official tool documented; LAZY does not proxy it'),
