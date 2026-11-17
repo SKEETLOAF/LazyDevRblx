@@ -9,6 +9,7 @@ import { ReferenceStore, ReferenceInputError } from './references.mjs';
 import { SequenceStore, SequenceInputError } from './sequences.mjs';
 import { CompetencyStore, CompetencyInputError, listCompetencies } from './competency/engine.mjs';
 import { ProjectBriefStore, BriefInputError } from './competency/briefs.mjs';
+import {listKnowledge,retrieveKnowledge,listBenchmarks,planBenchmark,KnowledgeInputError} from './knowledge/engine.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -264,6 +265,11 @@ export class DevKitState {
       throw error;
     }
   }
+
+  listKnowledge() { return listKnowledge(); }
+  queryKnowledge(args) { try {return retrieveKnowledge(args);} catch(e){if(e instanceof KnowledgeInputError)throw new InputError(e.message);throw e;} }
+  listBenchmarks() { return listBenchmarks(); }
+  planBenchmark(args) { try {return planBenchmark(args);} catch(e){if(e instanceof KnowledgeInputError)throw new InputError(e.message);throw e;} }
 
   listCompetencyPlans() { return this.competencies.list(); }
 

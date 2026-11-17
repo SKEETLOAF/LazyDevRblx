@@ -32,7 +32,9 @@ test('registry contains native-first vs LAZY specialist vs unsupported specialis
 });
 test('existing coverage is never silently upgraded to verified live Studio',()=>{
   const matrix=getCapabilityMatrix();
-  assert.equal(matrix.registryVersion,'2026-11-16.1');
+  assert.equal(matrix.registryVersion,'2026-11-17.1');
+  assert.ok(matrix.capabilities.some(x => x.id === 'knowledge.query'));
+  assert.ok(matrix.capabilities.some(x => x.id === 'benchmark.plan'));
   assert.ok(matrix.capabilities.length>20);
   for(const c of matrix.capabilities){
     assert.equal(c.checks.versionBoundStudioVerified,false);

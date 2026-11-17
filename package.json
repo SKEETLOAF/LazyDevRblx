@@ -1,6 +1,6 @@
 {
   "name": "lazy-devkit",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned Roblox Studio inspection, review and visual evidence bridge",
@@ -16,6 +16,7 @@
     "native:mcp:check": "node scripts/check-native-mcp.mjs",
     "reference:import": "node scripts/import-reference.mjs",
     "competency:plan": "node scripts/plan-competency.mjs",
-    "capabilities": "node scripts/check-capabilities.mjs"
+    "capabilities": "node scripts/check-capabilities.mjs",
+    "knowledge": "node scripts/knowledge.mjs"
   }
 }
