@@ -23,6 +23,7 @@ This folder is the canonical documentation hub for LAZY DevKit (repository: Lazy
 17. [Phase 12 capability verification](PHASE-12-CAPABILITY-VERIFICATION.md): Read-only native/LAZY capability routing and a version-bound Studio test protocol.
 18. [Creator study register, November 2026](research/CREATOR-STUDY-2026-11.md): Initial hand-vetted original-source, feedback/iteration, acclaimed-game and production-pipeline shortlist; research only.
 19. [Phase 13 source-aware knowledge and benchmarks](PHASE-13-KNOWLEDGE-BENCHMARKS.md): Local evidence-tiered source registry, task retrieval and five unrun controlled benchmark protocols.
+20. [Phase 14 benchmark evidence ledger](PHASE-14-BENCHMARK-EVIDENCE.md): Session-local, operator-supplied evidence linking and cautious numeric comparisons; live Studio tests still needed.
 
 Architecture, Skeleton → Flesh → Skin roadmap, and integration research were proposed as separate documents, but **have not been committed**. Do not treat those former link targets as existing sources of truth or create parallel copies without reviewing the repository.
 
