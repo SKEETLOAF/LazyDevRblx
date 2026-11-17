@@ -1,0 +1,9 @@
+export const VERSION='2026-11-17.1';
+const b=(id,title,disciplines,description,objective,human,instruments)=>({id,title,disciplines,description,objective,human,instruments,status:'not_run'});
+export const BENCHMARKS=Object.freeze([
+ b('movement-authority','Traversal and multiplayer security',['scripting','animation','game-design'],'Original disposable-place traversal mechanic, baseline and source-informed implementations.',['Unauthorized remote rejection','Contact error','Measured input latency'],['Responsiveness','Camera feel'],['Studio playtest','Source inspection','Input observations']),
+ b('animation-contact','Rig contact and original action',['animation','modeling'],'Original animation tested in target Roblox rig at actual gameplay camera distance.',['Foot contact drift','Rig import fidelity','Markers and loop continuity'],['Weight','Anticipation','Posing'],['Sequence capture','Rig inspection']),
+ b('environment-kit','Modular environment',['building','modeling'],'Build an original playable small environment with and without a planned modular kit.',['Instance/mesh use','Collision checks','Measured streaming/performance'],['Composition','Readability','Repetition'],['Hierarchy snapshot','Viewport','Profiler']),
+ b('vfx-audio','Ability effect and sound',['vfx','sfx','animation'],'Author fresh readable anticipation/impact/decay and synchronized spatial sound.',['Effect cleanup','Burst count','Sound synchronization'],['Gameplay visibility','Art direction','Mix'],['Sequence','Audio listening','Profiler']),
+ b('blind-onboarding','Unprompted mechanic learning',['game-design','ui'],'Observe genuinely unfamiliar users understanding an original mechanic without an explanation.',['Errors','Hesitation','Completion time'],['Player expectations','Willingness to retry'],['Consented playtests','Event logs'])
+]);

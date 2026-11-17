@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import {retrieveKnowledge} from '../knowledge/engine.mjs';
 import { ASSET_KINDS, CATALOG_VERSION, COMPETENCIES, SOURCES, STYLES } from './catalog.mjs';
 
 export const SUPPORTED_EVIDENCE_KINDS = Object.freeze([
@@ -141,6 +142,8 @@ export function buildCompetencyPlan(input,resolveBrief=null){
       gateIds:c.gates.map(g=>g.id),
     })),
     sources:resources,
+    knowledge:retrieveKnowledge({task,disciplines:selected.map(x=>x.id),limit:6}),
+    benchmarkCandidates:retrieveKnowledge({task,disciplines:selected.map(x=>x.id),limit:1}).benchmarkCandidates,
     resourcePolicy:{
       checkedOn:'2026-11-16',mode:brief&&brief.sourceLinks.length?'curated_plus_user_declared':'curated_offline',
       liveAvailability:'not_checked_at_request_time',
