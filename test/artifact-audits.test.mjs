@@ -77,7 +77,7 @@ test('WAV strict parser rejects malicious lengths, truncated samples and unsuppo
   bad[2].write('RIFX',0);
   bad[3].writeUInt32LE(10000,40);
   bad[4].writeUInt16LE(9,20);
-  bad[5].writeUInt16LE(2,32);
+  bad[5].writeUInt16LE(4,32);
   for(const x of bad)assert.throws(()=>analyzeWav(x),AudioInputError);
 });
 
