@@ -4,6 +4,7 @@ import { SceneProposalStore, SceneInputError } from './scene.mjs';
 import { DiagnosticsStore, DiagnosticInputError } from './diagnostics.mjs';
 import { PlaytestStore, PlaytestInputError } from './playtests.mjs';
 import { ViewportStore, ViewportInputError } from './viewport.mjs';
+import { RegionFrameStore, RegionFrameError } from './region-frames.mjs';
 import { SineStore, SineInputError } from './sine.mjs';
 import { ReferenceStore, ReferenceInputError } from './references.mjs';
 import { SequenceStore, SequenceInputError } from './sequences.mjs';
@@ -47,6 +48,7 @@ export class DevKitState {
     this.diagnostics = new DiagnosticsStore();
     this.playtests = new PlaytestStore();
     this.viewports = new ViewportStore();
+    this.regionFrames = new RegionFrameStore();
     this.sine = new SineStore();
     this.references = new ReferenceStore();
     this.sequences = new SequenceStore();
@@ -159,6 +161,24 @@ export class DevKitState {
     try { return this.viewports.read(requireString(id, 'viewportId', 100)); }
     catch (error) {
       if (error instanceof ViewportInputError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  recordRegionFrame(png) {
+    try { return this.regionFrames.record(png); }
+    catch (error) {
+      if (error instanceof RegionFrameError) throw new InputError(error.message, error.status);
+      throw error;
+    }
+  }
+
+  listRegionFrames() { return this.regionFrames.list(); }
+
+  readRegionFrame(id) {
+    try { return this.regionFrames.read(requireString(id, 'regionFrameId', 100)); }
+    catch (error) {
+      if (error instanceof RegionFrameError) throw new InputError(error.message, error.status);
       throw error;
     }
   }

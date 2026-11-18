@@ -4,6 +4,7 @@ import { InputError } from './state.mjs';
 import { handleRpc } from './mcp.mjs';
 import { VIEWPORT_MAX_BYTES, VIEWPORT_MAX_WIDTH, VIEWPORT_MAX_HEIGHT } from './viewport.mjs';
 import { MEDIA_MAX_BYTES } from './reference-media.mjs';
+import { REGION_MAX_BYTES } from './region-frames.mjs';
 import { SEQUENCE_MAX_WIDTH,SEQUENCE_MAX_HEIGHT,SEQUENCE_MAX_FRAMES,SEQUENCE_MAX_BYTES } from './sequences.mjs';
 
 const BODY_LIMIT = 350 * 1024;
@@ -81,6 +82,20 @@ async function readReferenceUpload(request) {
     chunks.push(chunk);
   }
   return {bytes:Buffer.concat(chunks),options:{label,mediaType}};
+}
+
+async function readRegionPng(request) {
+  if (request.headers['content-type']?.toLowerCase() !== 'image/png') {
+    throw new InputError('Region frame requires image/png', 415);
+  }
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of request) {
+    total += chunk.length;
+    if (total > REGION_MAX_BYTES) throw new InputError('Region frame exceeds 2 MiB', 413);
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 
 async function readViewportPixels(request) {
@@ -170,6 +185,9 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/specialist/sine') {
         return send(res, 201, state.inspectSine(await readJson(req)));
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/observations/region-frame') {
+        return send(res, 201, state.recordRegionFrame(await readRegionPng(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/viewport') {
         return send(res, 201, state.inspectViewport(await readViewportPixels(req)));
