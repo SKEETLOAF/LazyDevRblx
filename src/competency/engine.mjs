@@ -4,6 +4,7 @@ import { ASSET_KINDS, CATALOG_VERSION, COMPETENCIES, SOURCES, STYLES } from './c
 
 export const SUPPORTED_EVIDENCE_KINDS = Object.freeze([
   'viewport','structure','sequence','reference','playtest','diagnostics','observation',
+  'blender-audit','wav-audit',
 ]);
 const EVIDENCE_SET = new Set(SUPPORTED_EVIDENCE_KINDS);
 const SKILL_IDS = new Set(COMPETENCIES.map(x=>x.id));

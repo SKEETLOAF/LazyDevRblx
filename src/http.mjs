@@ -156,10 +156,13 @@ export function createStudioServer(state, { token = randomBytes(32).toString('he
         return send(res, 200, { reply: handleRpc(state, await readJson(req)) });
       }
       if (req.method === 'GET' && url.pathname === '/v1/status') {
-        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '1.1.0' });
+        return send(res, 200, { name: 'lazy-devkit', status: 'ready', version: '1.7.0' });
       }
       if (req.method === 'POST' && url.pathname === '/v1/studio/sequence') {
         return send(res,201,state.inspectSequence(await readSequenceFrames(req)));
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/artifacts/import') {
+        return send(res,201,state.recordArtifactAudit(await readJson(req)));
       }
       if (req.method === 'POST' && url.pathname === '/v1/references/import') {
         const {bytes,options}=await readReferenceUpload(req);

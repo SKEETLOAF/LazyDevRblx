@@ -11,6 +11,7 @@ import { CompetencyStore, CompetencyInputError, listCompetencies } from './compe
 import { ProjectBriefStore, BriefInputError } from './competency/briefs.mjs';
 import {listKnowledge,retrieveKnowledge,listBenchmarks,planBenchmark,KnowledgeInputError} from './knowledge/engine.mjs';
 import {BenchmarkEvidenceStore,BenchmarkEvidenceError} from './knowledge/runs.mjs';
+import {ArtifactAuditStore,AuditInputError} from './artifacts/audits.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -52,6 +53,7 @@ export class DevKitState {
     this.briefs = new ProjectBriefStore(id=>this.references.references.has(id));
     this.competencies = new CompetencyStore(id=>this.briefs.read(id));
     this.benchmarkRuns = new BenchmarkEvidenceStore((kind,id)=>this.competencyEvidencePresent(kind,id));
+    this.artifactAudits = new ArtifactAuditStore();
   }
 
   inspect(input) {
@@ -276,6 +278,23 @@ export class DevKitState {
   compareBenchmarkRuns(args) { try{return this.benchmarkRuns.compare(args);}catch(e){if(e instanceof BenchmarkEvidenceError)throw new InputError(e.message);throw e;} }
   planBenchmark(args) { try {return planBenchmark(args);} catch(e){if(e instanceof KnowledgeInputError)throw new InputError(e.message);throw e;} }
 
+  recordArtifactAudit(input) {
+    try { return this.artifactAudits.record(input); }
+    catch(error) {
+      if(error instanceof AuditInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+  listArtifactAudits() { return this.artifactAudits.list(); }
+  readArtifactAudit(id) {
+    try {return this.artifactAudits.read(requireString(id,'auditId',100));}
+    catch(error){if(error instanceof AuditInputError)throw new InputError(error.message,error.status);throw error;}
+  }
+  compareArtifactAudits(input) {
+    try {return this.artifactAudits.compare(input);}
+    catch(error){if(error instanceof AuditInputError)throw new InputError(error.message,error.status);throw error;}
+  }
+
   listCompetencyPlans() { return this.competencies.list(); }
 
   readCompetencyPlan(id) {
@@ -293,6 +312,7 @@ export class DevKitState {
     if(kind==='reference')return this.references.references.has(id);
     if(kind==='playtest')return this.playtests.reports.has(id);
     if(kind==='diagnostics')return this.diagnostics.observations.has(id);
+    if(kind==='blender-audit'||kind==='wav-audit')return this.artifactAudits.items.get(id)?.kind===(kind==='blender-audit'?'blender':'wav');
     if(kind==='observation'){
       const item=this.snapshots.get(id);
       return !!item&&this.latestByInstance.get(item.instanceId)===id;

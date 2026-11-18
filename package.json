@@ -1,6 +1,6 @@
 {
   "name": "lazy-devkit",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
   "description": "Local-first, permissioned Roblox Studio inspection, review and visual evidence bridge",
@@ -17,6 +17,8 @@
     "reference:import": "node scripts/import-reference.mjs",
     "competency:plan": "node scripts/plan-competency.mjs",
     "capabilities": "node scripts/check-capabilities.mjs",
-    "knowledge": "node scripts/knowledge.mjs"
+    "knowledge": "node scripts/knowledge.mjs",
+    "artifact:inspect": "node scripts/inspect-artifact.mjs",
+    "artifact:import": "node scripts/import-artifact.mjs"
   }
 }
