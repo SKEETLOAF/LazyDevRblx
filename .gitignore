@@ -1,0 +1,3 @@
+# Local per-project manifests can contain private creative direction and references.
+# Review explicitly before forcing a project manifest into version control.
+.lazydev/
