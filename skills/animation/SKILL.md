@@ -13,4 +13,6 @@ Eclipse or Moon may be available locally, but DevKit does not currently control 
 
 **Quality evidence:** approved multi-view sequence, sample timing, structure/rig ownership, in-game playback and animation event results. Pixel-change peaks are not semantic action markers. Test at normal gameplay speed and in context.
 
+**Blender facts:** The source audit can enumerate armatures, bone counts and assigned actions, but does not recover keyframe timing, demonstrate contact or prove playback. Judge motion from actual authorized sequences and runtime behavior.
+
 **References:** Roblox animation and Animation Editor documentation in the plan.

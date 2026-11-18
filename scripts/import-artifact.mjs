@@ -1,6 +1,8 @@
 import {readFile,stat} from 'node:fs/promises';
 import {readSession} from '../src/session.mjs';
 import {normalizeAudit} from '../src/artifacts/audits.mjs';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
 export async function importAuditFile(args=process.argv.slice(2),{readSessionFn=readSession,post=fetch}={}){
   if(args.length!==1||!args[0]||args[0].startsWith('--'))throw Error('Usage: npm run artifact:import -- "audit.json"');
   const f=args[0],info=await stat(f);
@@ -21,7 +23,7 @@ export async function importAuditFile(args=process.argv.slice(2),{readSessionFn=
   if(!response.ok)throw Error('Audit import rejected: '+String(data.error||'bridge error'));
   return data;
 }
-if(process.argv[1]&&import.meta.url==='file://'+process.argv[1].replace(/\\/g,'/')){
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   importAuditFile().then(x=>process.stdout.write(JSON.stringify(x,null,2)+'\n'))
     .catch(e=>{process.stderr.write(e.message+'\n');process.exitCode=1;});
 }

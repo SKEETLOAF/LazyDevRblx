@@ -211,7 +211,8 @@ export class CompetencyStore {
         evidence:linked,
         missingKinds,unsupportedKinds:unsupported,
         evidenceStatus:unsupported.length?'instrumentation_unavailable':
-          missingKinds.length?'evidence_missing':'ready_for_review',
+          missingKinds.length?(gate.appliesWhen==='always'?'evidence_missing':'conditional_unverified'):'ready_for_review',
+        appliesWhen:gate.appliesWhen,
         qualityVerdict:'not_assessed',
       };
     });
@@ -219,6 +220,7 @@ export class CompetencyStore {
       total:results.length,
       evidenceReady:results.filter(g=>g.evidenceStatus==='ready_for_review').length,
       missing:results.filter(g=>g.evidenceStatus==='evidence_missing').length,
+      conditional:results.filter(g=>g.evidenceStatus==='conditional_unverified').length,
       instrumentationUnavailable:results.filter(g=>g.evidenceStatus==='instrumentation_unavailable').length,
     };
     return {
