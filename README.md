@@ -6,6 +6,10 @@ A public, local-first, model-independent experiment for safer AI-assisted Roblox
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
 
+## Experimental desktop region vision
+
+An **opt-in Windows/FFmpeg visual observation helper** can share recent frames of a user-chosen desktop rectangle to the existing authenticated local daemon. It bypasses Studio's optional screenshot API, but does not control Studio, run AI inference, record video files, or claim a live model stream. A human runs `npm run observe:region -- --region X,Y,W,H --share`; a compatible MCP client then calls `lazydev_list_region_frames` and `lazydev_read_region_frame`. Frames expire in RAM after 30 seconds. Requires externally installed FFmpeg and real Windows verification. **A desktop region may contain other windows or private UI; review the location before opting in.** See [Phase 17 usage and safety](docs/PHASE-17-REGION-VISION.md).
+
 ## Verified-capability roadmap (V1.4)
 
 Before adding broader automation, inspect the explicit implementation and verification matrix:
