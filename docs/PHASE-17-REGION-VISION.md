@@ -15,7 +15,7 @@ Check installation locally:
 
 \`\`\`powershell
 ffmpeg -version
-cd "C:\Users\RoddyBBC\LazyDevRblx"
+cd "C:\path\to\LazyDevRblx"
 npm test
 npm start
 \`\`\`
@@ -23,7 +23,7 @@ npm start
 In another PowerShell window, choose coordinates for a small area **entirely inside the visible 3D Studio viewport**. Example below is an illustration, **not a detected position or a recommended crop for your desktop**:
 
 \`\`\`powershell
-cd "C:\Users\RoddyBBC\LazyDevRblx"
+cd "C:\path\to\LazyDevRblx"
 npm run observe:region -- --region 100,200,960,540 --share --fps 1 --seconds 60
 \`\`\`
 
