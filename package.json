@@ -19,6 +19,7 @@
     "capabilities": "node scripts/check-capabilities.mjs",
     "knowledge": "node scripts/knowledge.mjs",
     "artifact:inspect": "node scripts/inspect-artifact.mjs",
-    "artifact:import": "node scripts/import-artifact.mjs"
+    "artifact:import": "node scripts/import-artifact.mjs",
+    "observe:region": "node scripts/observe-region.mjs"
   }
 }
