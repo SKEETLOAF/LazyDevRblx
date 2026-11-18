@@ -52,8 +52,9 @@
 
 | D-034 | Implemented experimentally in V1.4 | Use a source-linked capability matrix that distinguishes implemented, declared Node tests, historical user reports, and exact-version Studio/host verification. Prefer native Studio MCP for overlapping documented actions, keep specialized LAZY review/evidence separate, and never promote a user-filled or syntactically valid verification record to a verified status without reviewing proof. No new control privileges. |
 
-| D-033 | Experimental V1.7 implementation | An explicit local CLI can inspect Blender scene object/mesh/rig metadata or uncompressed WAV signal levels. Users separately authorize sharing only the bounded JSON audit with the daemon. Optional Blender preview renders write to a new local folder; no original .blend save occurs. |
-| D-034 | Experimental V1.7 implementation | Conditional Blender/WAV source checks support art, animation, VFX and SFX reviews but cannot pass a subjective or behavioral quality gate. Studio-native work is never required to use Blender, nor all audio to be WAV. |
+| D-035 | Experimental V1.7 implementation | An explicit local CLI can inspect Blender scene object/mesh/rig metadata or uncompressed WAV signal levels. Users separately authorize sharing only the bounded JSON audit with the daemon. Optional Blender preview renders write to a new local folder; no original .blend save occurs. |
+| D-036 | Experimental V1.7 implementation | Conditional Blender/WAV source checks support art, animation, VFX and SFX reviews but cannot pass a subjective or behavioral quality gate. Studio-native work is never required to use Blender, nor all audio to be WAV. |
+| D-037 | Experimental V1.8 candidate (2026-11-17) | Portable project identity should require explicit CLI export/import of a versioned bounded manifest. Never silently scan a project, overwrite an existing manifest, persist credentials or transient image/GIF reference IDs, or upgrade user-supplied rights claims into verified licenses. Live daemon/Studio workflow still requires testing. |
 
 ## Open technical questions
 
