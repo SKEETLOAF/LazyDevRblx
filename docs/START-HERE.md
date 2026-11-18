@@ -44,6 +44,10 @@ Architecture, Skeleton → Flesh → Skin roadmap, and integration research were
 - `V0-INTEGRATION-CHECKLIST.md`: Unverified Studio integration gates.
 - `planning/`, `research/`, `architecture/`: Reserved for future work; not present as of V0.
 
+## New real-artifact inspection milestone
+
+[Phase 15 creative artifact inspection](PHASE-15-ARTIFACT-INSPECTION.md) adds explicit local Blender and WAV source audits, optional diagnostic views, manual import and conservative revision comparison. It supplements rather than replaces Studio viewport/sequence/hierarchy evidence.
+
 ## Updating these files
 
 When new evidence or testing changes a conclusion, record the evidence, update the affected decision and cross-references, and leave a brief note indicating what was superseded. Keep unresolved assumptions visible.

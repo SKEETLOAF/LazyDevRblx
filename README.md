@@ -1,5 +1,7 @@
 # LAZY DevKit
 
+**V1.7:** Opt-in local Blender scene and WAV inspections can now produce bounded evidence for existing competency reviews. This does not automate editor GUI operations, generate finished assets, grade artistry or replace Studio playtests.
+
 A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.4 adds a source-linked, read-only capability inventory and a strict schema for recording Studio integration-test claims. It separates historical user tests from version-bound verification, and recognizes documented native Roblox Studio MCP tools without pretending they are connected. Most V0.4-and-later Studio UI flows remain unverified.**
 
 Start with [docs/START-HERE.md](docs/START-HERE.md) for product decisions. The implementation below is deliberately smaller than the long-term vision.
@@ -17,6 +19,19 @@ npm run capabilities -- --validate
 This is a **read-only catalog**, not a Studio probe. It shows native-first routes, LAZY-specific work and experimental/unsupported specialist integrations. Every entry separately describes implementation, declared Node tests, old user reports and missing version-bound live Studio/host verification. A green CI run does not automatically change those last two fields. The catalog now tracks documented native Studio MCP features as candidates for direct native use instead of duplicating them.
 
 [Phase 12: verification and native MCP convergence](docs/PHASE-12-CAPABILITY-VERIFICATION.md) includes the machine-readable field contract and a disposable-place Studio test protocol. No token, project file or local Studio environment is accessed by this command.
+
+## Local creative artifact inspection (V1.7)
+
+The user can explicitly inspect actual Blender scene structure or uncompressed WAV signal levels. Optional Blender diagnostics render three 512px views. The original asset stays unchanged.
+
+```powershell
+npm run artifact:inspect -- wav "C:/MyGame/audio/impact.wav" --out "C:/MyGame/reviews/impact.json"
+npm run artifact:inspect -- blender "C:/MyGame/models/creature.blend" --out "C:/MyGame/reviews/creature-audit" --previews
+# If Blender is not on PATH, add --blender "C:/Path/To/blender.exe".
+npm run artifact:import -- "C:/MyGame/reviews/creature-audit/audit.json"
+```
+
+The last command is a **separate user opt-in** requiring the already running authenticated localhost daemon. It shares **JSON metadata only**; raw meshes/audio and previews remain local. Four new MCP tools record, list, read and compare audit reports. A supplied report is marked unverified and no quality gate automatically passes. Blender remains an external executable, not a security sandbox. See [Phase 15 artifact inspection](docs/PHASE-15-ARTIFACT-INSPECTION.md).
 
 ## Cross-disciplinary competency system (V1.3)
 

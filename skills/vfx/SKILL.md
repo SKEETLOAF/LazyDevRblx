@@ -13,4 +13,6 @@ Sine's documented `shared.sv` is a planted **client runtime** shortcut, not proo
 
 **Quality evidence:** approved screenshot sequence, real reference timing, structure, mobile-game camera checks and measured emitter/frame cost. A numeric pixel-change peak does not prove impact quality.
 
+**Blender facts:** Inspect source meshes and collections when effects use authored mesh geometry. Runtime emitter density, timing, cleanup and performance still require Studio observations.
+
 **References:** Roblox effects and performance docs from the competency router.

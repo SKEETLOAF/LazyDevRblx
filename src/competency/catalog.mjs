@@ -8,8 +8,8 @@ const official = (title,path,why) => ({
   why,checkedOn:RESOURCE_CHECKED_ON,liveAvailability:'not_checked_at_request_time',
   licenseNote:'Documentation is a learning resource, not permission to copy third-party assets.',
 });
-const gate=(id,question,requiredKinds,review) => ({
-  id,question,requiredKinds,review,
+const gate=(id,question,requiredKinds,review,appliesWhen='always') => ({
+  id,question,requiredKinds,review,appliesWhen,
   verdict:'not_assessed',
 });
 
@@ -35,6 +35,7 @@ export const COMPETENCIES = [
       gate('modeling:construction','Are independently manipulated pieces, pivots and reusable sections organized intentionally?',['structure'],'human_structural_review'),
       gate('modeling:reference','Does shape language, surface treatment and detail placement match approved direction?',['reference','viewport'],'human_art_direction_review'),
       gate('modeling:rig','If deforming, have topology and rig motion been verified under representative poses?',['sequence'],'human_animation_review'),
+      gate('modeling:authoring-data','For Blender-authored assets, do mesh, modifier, UV and collection data support the intended construction?',['blender-audit'],'human_source_review','when_blender_authored'),
     ],
   },
   {
@@ -58,6 +59,7 @@ export const COMPETENCIES = [
       gate('building:navigation','Are scale, entrances, camera views and movement routes legible?',['viewport','playtest'],'human_gameplay_review'),
       gate('building:style','Does the environment match approved style, palette and shape language?',['reference','viewport'],'human_art_direction_review'),
       gate('building:performance','Have streaming, draw cost and device performance been measured?',['performance'],'performance_instrumentation_required'),
+      gate('building:authoring-data','For Blender-authored environments, are reusable object and collection boundaries apparent in source?',['blender-audit'],'human_source_review','when_blender_authored'),
     ],
   },
   {
@@ -81,6 +83,7 @@ export const COMPETENCIES = [
       gate('animation:rig','Do animated poses preserve contacts, pivots and deformation?',['sequence','structure'],'human_rig_review'),
       gate('animation:reference','Does timing and body language follow the intended reference principles?',['sequence','reference'],'human_art_direction_review'),
       gate('animation:playback','Does playback behave properly in-game, including priorities and loops?',['playtest'],'functional_test_needed'),
+      gate('animation:authoring-data','For Blender-authored motion, are rigs and action references present and inspectable?',['blender-audit'],'human_source_review','when_blender_authored'),
     ],
   },
   {
@@ -104,6 +107,7 @@ export const COMPETENCIES = [
       gate('vfx:reference','Does the visual language and layering follow the approved reference?',['sequence','reference'],'human_art_direction_review'),
       gate('vfx:organization','Are emitters, attachments, light sources and cleanup ownership separated?',['structure'],'human_structural_review'),
       gate('vfx:performance','Have device frame time and emitter counts been measured?',['performance'],'performance_instrumentation_required'),
+      gate('vfx:mesh-source','For mesh-driven VFX made in Blender, are source objects and collections inspectable?',['blender-audit'],'human_source_review','when_blender_authored'),
     ],
   },
   {
@@ -125,6 +129,7 @@ export const COMPETENCIES = [
     gates:[
       gate('sfx:timing','Are cues synchronized to the intended events and free of accidental repetition?',['playtest'],'functional_test_needed'),
       gate('sfx:mix','Do balance, clipping, dynamics and tonal layering work across target devices?',['audio'],'audio_review_tool_required'),
+      gate('sfx:signal','For WAV-authored SFX, what do peaks, RMS, offset and potential clipping indicate?',['wav-audit'],'signal_evidence_review','when_wav_source'),
       gate('sfx:space','Do positional and nonpositional sounds behave as intended?',['playtest'],'functional_test_needed'),
       gate('sfx:accessibility','Are important cues also communicated without relying on sound alone?',['viewport','playtest'],'human_accessibility_review'),
     ],

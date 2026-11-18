@@ -139,7 +139,7 @@ test('quality review checks real evidence ID presence without issuing a false pa
     ],
   });
   assert.equal(assessed.overallVerdict,'not_assessed');
-  assert.equal(assessed.counts.total,4);
+  assert.equal(assessed.counts.total,5);
   assert.equal(assessed.counts.evidenceReady,1);
   const silhouette=assessed.gates.find(x=>x.gateId==='modeling:silhouette');
   assert.equal(silhouette.evidenceStatus,'ready_for_review');

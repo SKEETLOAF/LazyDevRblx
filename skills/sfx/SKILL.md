@@ -9,6 +9,6 @@ Clarify function: gameplay cue, environment ambience, interface feedback, action
 
 Distinguish nonspatial UI/audio from localized 3D sources. Review pitch, dynamics, attenuation, looping, frequency masking, repeated-trigger behavior and user volume settings. Roblox's modular audio objects provide current routing capabilities; do not default blindly to deprecated APIs. Audacity and FFmpeg are available to the user, but DevKit does not yet remotely operate them.
 
-**Quality evidence:** actual authorized audio playback listened to at realistic loudness, timed playtest evidence, spatial behavior checks and appropriate visual/accessible fallback. DevKit currently lacks audio waveform/listening instrumentation, so mark mix-quality gates *instrumentation unavailable* rather than passed.
+**Quality evidence:** actual authorized audio playback listened to at realistic loudness, timed playtest evidence, spatial behavior checks and appropriate visual/accessible fallback. DevKit V1.7 can inspect amplitude peaks, RMS, DC offset and possible clipping on manually selected uncompressed WAV. It cannot listen or judge mixing, timbre, spatial impressions or gameplay synchronization; listening/perceptual quality gates remain instrumentation unavailable.
 
 **References:** Roblox audio objects, Sound and animation docs in the plan.

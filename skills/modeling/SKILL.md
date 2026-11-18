@@ -13,4 +13,6 @@ In Blender, plan individual objects and collections by **editing responsibility*
 
 **Quality evidence:** user-approved side/front/three-quarter views, structure snapshot, and rig pose/movement evidence when applicable. Assess silhouette, visual style, detail integration, normals, seam placement and maintainability independently. A successful FBX or glTF import is not proof that the model looks good.
 
+**Blender facts:** A user-invoked V1.7 source audit can inspect objects, parents, collections, UVs, modifiers and face/vertex counts without editing a .blend. Optional three-view renders require separately approved image import before the agent may claim visual observation. Counts do not prove correct anatomy, topology or shape quality.
+
 **References:** Roblox custom assets and importer documentation from `lazydev_plan_competency_task`; use approved modeling reference images before guessing hidden geometry.

@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lazy-devkit",
-  "version": "1.4.0",
-  "description": "Local-first Roblox Studio bridge, skill planning, project briefs and conservative capability verification.",
+  "version": "1.7.0",
+  "description": "Permissioned Roblox development bridge with multidisciplinary planning and opt-in local Blender/WAV source audits.",
   "repository": "https://github.com/SKEETLOAF/LazyDevRblx",
   "extensions": {
     "com.openai": {
