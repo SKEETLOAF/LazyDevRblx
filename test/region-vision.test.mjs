@@ -85,7 +85,7 @@ test('agent can inspect real bytes but neither start capture nor retain stale fr
   assert.equal(contents[1].mimeType, 'image/png');
   assert.equal(Buffer.from(contents[1].data, 'base64').equals(png), true);
   assert.equal(rpc(state, 'lazydev_read_region_frame', {regionFrameId:'missing'}).isError, true);
-  assert.equal(rpc(state, 'lazydev_start_region_capture').isError === undefined, true, 'No start tool should exist');
+  assert.equal(handleRpc(state,{jsonrpc:'2.0',id:4,method:'tools/call',params:{name:'lazydev_start_region_capture',arguments:{}}}).error?.code,-32602);
   const toolNames = handleRpc(state, {jsonrpc:'2.0',id:2,method:'tools/list'}).result.tools.map(x => x.name);
   assert.equal(toolNames.includes('lazydev_start_region_capture'), false);
 });
