@@ -55,6 +55,7 @@ async function run(){
   if(info.size<16||info.size>1024*1024*1024)throw Error('.blend must be a regular file at most 1 GiB');
   const dest=resolve(options.out);
   if(dest===file||dest===dirname(file))throw Error('Specify a NEW output directory, not the source');
+  await mkdir(dirname(dest),{recursive:true});
   await mkdir(dest,{recursive:false});
   const inspector=fileURLToPath(new URL('../adapters/blender/inspect_scene.py',import.meta.url));
   const blender=options.blender||'blender';

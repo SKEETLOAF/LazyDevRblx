@@ -23,3 +23,8 @@ jobs:
           node-version: '22'
       - name: Run dependency-free bridge tests
         run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax-check Blender adapter (without Blender)
+        run: python -m py_compile adapters/blender/inspect_scene.py
