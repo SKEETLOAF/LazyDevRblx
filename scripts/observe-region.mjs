@@ -18,6 +18,9 @@ export async function captureRegion(
     child.once('error', reject);
     child.once('close', (code, signal) => resolveClose({ code, signal }));
   });
+  // Attach a rejection observer immediately so a missing executable cannot
+  // trigger an unhandled rejection before stdout finishes closing.
+  closed.catch(() => {});
   let cancelled = false;
   let timedOut = false;
   let count = 0;
