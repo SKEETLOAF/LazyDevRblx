@@ -183,13 +183,37 @@ const TOOLS = [
     inputSchema:{type:'object',properties:{planId:{type:'string'}},required:['planId'],additionalProperties:false},
   },
   {
+    name: 'lazydev_record_native_evidence',
+    description: 'Explicit opt-in: record an operator-reported Roblox_Studio MCP evidence ID and place context WITHOUT retrieving content. Unverified pointer, never a quality pass; no local file paths or URLs.',
+    inputSchema:{type:'object',properties:{
+      kind:{type:'string',enum:['viewport','structure','playtest','diagnostics','observation']},
+      provider:{type:'string',enum:['Roblox_Studio']},
+      sourceTool:{type:'string'},
+      sourceReference:{type:'string',maxLength:160},
+      capturedAt:{type:'string',maxLength:36},
+      placeId:{type:'integer',minimum:0},
+      universeId:{type:'integer',minimum:0},
+      placeName:{type:'string',maxLength:160},
+      sessionLabel:{type:'string',maxLength:60},
+      captureMode:{type:'string',enum:['edit','play','run','unknown']},
+      summary:{type:'string',maxLength:500},
+      operatorConsent:{type:'boolean'},
+    },required:['kind','provider','sourceTool','sourceReference','capturedAt','placeId','universeId','placeName','sessionLabel','captureMode','summary','operatorConsent'],
+    additionalProperties:false},
+  },
+  {name:'lazydev_list_native_evidence',description:'List temporary, unverified pointers to native Studio MCP evidence; no image/console content is stored.',inputSchema:{type:'object',properties:{},additionalProperties:false}},
+  {name:'lazydev_read_native_evidence',description:'Read one operator-reported native Studio evidence pointer with place context and explicit uncertainty.',inputSchema:{type:'object',properties:{evidenceId:{type:'string'}},required:['evidenceId'],additionalProperties:false}},
+  {
     name: 'lazydev_assess_competency_plan',
-    description: 'Check whether listed evidence IDs exist for quality gates; NEVER marks quality or gameplay as passed. Missing audio/performance/device test infrastructure is reported explicitly.',
+    description: 'Assess local evidence IDs and operator-reported native MCP pointers separately; optionally propose justified N/A gates. Never passes quality or verifies external source material.',
     inputSchema:{type:'object',properties:{
       planId:{type:'string'},
       evidence:{type:'array',maxItems:96,items:{type:'object',properties:{
         gateId:{type:'string'},kind:{type:'string'},id:{type:'string'},
       },required:['gateId','kind','id'],additionalProperties:false}},
+      notApplicable:{type:'array',maxItems:30,items:{type:'object',properties:{
+        gateId:{type:'string'},reason:{type:'string',minLength:20,maxLength:400},
+      },required:['gateId','reason'],additionalProperties:false}},
     },required:['planId'],additionalProperties:false},
   },
   {name:'lazydev_list_knowledge',description:'List curated source packs with historic provenance; read only and no live source checking.',inputSchema:{type:'object',properties:{},additionalProperties:false}},
@@ -322,6 +346,9 @@ export function handleRpc(state, message) {
       else if (name === 'lazydev_plan_competency_task') output = state.createCompetencyPlan(args);
       else if (name === 'lazydev_read_competency_plan') output = state.readCompetencyPlan(args.planId);
       else if (name === 'lazydev_assess_competency_plan') output = state.assessCompetencyPlan(args);
+      else if (name === 'lazydev_record_native_evidence') output = state.recordNativeEvidence(args);
+      else if (name === 'lazydev_list_native_evidence') output = state.listNativeEvidence();
+      else if (name === 'lazydev_read_native_evidence') output = state.readNativeEvidence(args.evidenceId);
       else if (name === 'lazydev_get_proposal_status') output = state.proposalStatus(args.proposalId);
       else return error(-32602, 'Unknown tool');
       return result({ content: [{ type: 'text', text: JSON.stringify(output) }], isError: false });
