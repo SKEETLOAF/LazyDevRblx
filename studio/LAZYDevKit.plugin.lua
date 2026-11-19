@@ -9,6 +9,8 @@ local StudioTestService = game:GetService("StudioTestService")
 local StudioCaptureService = game:GetService("StudioCaptureService")
 local AssetService = game:GetService("AssetService")
 local CollectionService = game:GetService("CollectionService")
+local RunService = game:GetService("RunService")
+local studioSessionId = HttpService:GenerateGUID(false)
 
 local BRIDGE = "http://127.0.0.1:43187"
 local MAX_SOURCE_BYTES = 128 * 1024
@@ -949,7 +951,20 @@ local function collectStructure(root)
     end
 
     collect(root, nil, 0)
-    return { rootPath = root:GetFullName(), truncated = truncated, nodes = nodes }, references
+    -- Session-scoped provenance; PlaceId/GameId may be 0 for unsaved places.
+    -- Do not treat this metadata as an independently verified Studio connection.
+    return {
+        rootPath = root:GetFullName(),
+        truncated = truncated,
+        nodes = nodes,
+        placeContext = {
+            placeId = game.PlaceId,
+            universeId = game.GameId,
+            placeName = game.Name,
+            studioSessionId = studioSessionId,
+            captureMode = RunService:IsRunning() and "running" or "edit",
+        },
+    }, references
 end
 
 structureButton.MouseButton1Click:Connect(function()
@@ -967,6 +982,10 @@ structureButton.MouseButton1Click:Connect(function()
         sceneInfoLabel.Text = "Inspected: " .. evidence.rootPath
         infoLabel.Text = "Hierarchy: " .. response.rootPath ..
             "\nNodes: " .. response.nodeCount ..
+            "\nPlace: " .. evidence.placeContext.placeName ..
+            " (ID " .. tostring(evidence.placeContext.placeId) .. ")" ..
+            "\nMode: " .. evidence.placeContext.captureMode ..
+            " / session-scoped, not live-verified" ..
             (response.truncated and " (partial snapshot)" or " (complete within depth 4)")
         setStatus("Read-only hierarchy shared with bridge. No script source sent. " ..
             "Use lazydev_list_structures and lazydev_read_structure in your MCP client.")
