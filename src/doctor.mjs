@@ -104,9 +104,14 @@ export async function diagnose({
     ];
     const counts = {};
     for (const [key, toolName] of kinds) {
-      counts[key] = names.has(toolName)
-        ? parseList(await rpc('tools/call', { name: toolName, arguments: {} }))
-        : null;
+      counts[key] = null;
+      if (!names.has(toolName)) continue;
+      try {
+        counts[key] = parseList(await rpc('tools/call', { name: toolName, arguments: {} }));
+      } catch {
+        // A failed optional evidence tool must not mask a working MCP handshake.
+        counts[key] = null;
+      }
     }
     const available = Object.values(counts).every(Number.isInteger);
     report.sharedEvidence = {
