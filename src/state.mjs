@@ -12,6 +12,7 @@ import { ProjectBriefStore, BriefInputError } from './competency/briefs.mjs';
 import {listKnowledge,retrieveKnowledge,listBenchmarks,planBenchmark,KnowledgeInputError} from './knowledge/engine.mjs';
 import {BenchmarkEvidenceStore,BenchmarkEvidenceError} from './knowledge/runs.mjs';
 import {ArtifactAuditStore,AuditInputError} from './artifacts/audits.mjs';
+import {NativeEvidenceStore,NativeEvidenceInputError} from './native-evidence.mjs';
 
 export const SOURCE_LIMIT = 128 * 1024;
 const SNAPSHOT_LIMIT = 50;
@@ -54,6 +55,7 @@ export class DevKitState {
     this.competencies = new CompetencyStore(id=>this.briefs.read(id));
     this.benchmarkRuns = new BenchmarkEvidenceStore((kind,id)=>this.competencyEvidencePresent(kind,id));
     this.artifactAudits = new ArtifactAuditStore();
+    this.nativeEvidence = new NativeEvidenceStore();
   }
 
   inspect(input) {
@@ -295,6 +297,22 @@ export class DevKitState {
     catch(error){if(error instanceof AuditInputError)throw new InputError(error.message,error.status);throw error;}
   }
 
+  recordNativeEvidence(input) {
+    try {return this.nativeEvidence.record(input);}
+    catch(error) {
+      if(error instanceof NativeEvidenceInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+  listNativeEvidence() {return this.nativeEvidence.list();}
+  readNativeEvidence(id) {
+    try {return this.nativeEvidence.read(requireString(id,'evidenceId',100));}
+    catch(error) {
+      if(error instanceof NativeEvidenceInputError)throw new InputError(error.message,error.status);
+      throw error;
+    }
+  }
+
   listCompetencyPlans() { return this.competencies.list(); }
 
   readCompetencyPlan(id) {
@@ -321,7 +339,11 @@ export class DevKitState {
   }
 
   assessCompetencyPlan(input) {
-    try { return this.competencies.assess(input,(kind,id)=>this.competencyEvidencePresent(kind,id)); }
+    try { return this.competencies.assess(input,(kind,id)=>{
+      if(this.competencyEvidencePresent(kind,id))return true;
+      const external=this.nativeEvidence.lookup(kind,id);
+      return external ? {present:true,provenance:external.provenance,verification:external.verification} : false;
+    }); }
     catch(error) {
       if(error instanceof CompetencyInputError||error instanceof BriefInputError)throw new InputError(error.message,error.status);
       throw error;
