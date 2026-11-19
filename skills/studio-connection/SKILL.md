@@ -11,6 +11,10 @@ For new installations or failures: the developer can run `npm run doctor` on the
 
 **Routing:** Native operation available and authorized → use native MCP. LAZY-specific reference, inspection, audit or reviewed proposal → use LAZY when independently connected. Neither available → report the limitation and do not invent an action. Do not duplicate official tools inside LAZY solely to make it look autonomous.
 
+Before using previously shared hierarchy observations, check `placeContext`, `provenanceStatus` and capture mode; `legacy_unidentified` snapshots may be from another game. Native `Roblox_Studio` MCP is still the source for current live hierarchy.
+
+For native MCP screenshots, playtests, logs or readouts obtained and **actually inspected** through another host, LAZY can optionally record **metadata-only references** using `lazydev_record_native_evidence` after explicit operator approval. It cannot fetch or validate the referenced content; the result must stay `operator_reported_native_mcp_unverified`. When assessing a plan, link only the returned evidence IDs and use `notApplicable` with a substantive reason only for genuinely out-of-scope gates. These produce `external_evidence_linked_for_review` or `not_applicable_proposed`, not success. See `docs/NATIVE-EVIDENCE-REVIEW.md`.
+
 The LAZY-only instructions below apply **only** when the optional bridge is connected:
 
 1. Confirm MCP tools are available before claiming a connection. Run `lazydev_list_structures` and report only returned data.
