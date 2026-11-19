@@ -28,6 +28,40 @@ function checkProperty(key, value) {
 }
 function invalid(message) { throw new TypeError(message); }
 
+const CAPTURE_MODES = new Set(['edit', 'running', 'unknown']);
+// Caller-reported provenance, not an attestation that Studio is presently open.
+function normalizePlaceContext(value) {
+  if (value === undefined || value === null) return null; // Legacy plugin support.
+  if (!isObject(value) || Object.keys(value).some(k =>
+    !['placeId','universeId','placeName','studioSessionId','captureMode'].includes(k))) {
+    invalid('placeContext contains unsupported fields');
+  }
+  for (const key of ['placeId','universeId']) {
+    if (!Number.isSafeInteger(value[key]) || value[key] < 0) {
+      invalid('Invalid placeContext ' + key);
+    }
+  }
+  if (!boundedString(value.placeName, 160) ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value.studioSessionId ?? '') ||
+      !CAPTURE_MODES.has(value.captureMode)) {
+    invalid('Invalid placeContext identity or capture mode');
+  }
+  return {
+    placeId: value.placeId,
+    universeId: value.universeId,
+    placeName: value.placeName,
+    studioSessionId: value.studioSessionId.toLowerCase(),
+    captureMode: value.captureMode,
+  };
+}
+function structureKey(observation) {
+  const c = observation.placeContext;
+  // Unsaved Studio places commonly have 0 identifiers; per-plugin session
+  // identity prevents ambiguous same-path observations from colliding.
+  return c ? JSON.stringify([c.studioSessionId,c.universeId,c.placeId,observation.rootPath]) :
+    'legacy:' + observation.rootPath;
+}
+
 export function normalizeStructure(input) {
   if (!isObject(input)) invalid('Expected structure observation object');
   if ('source' in input) invalid('Source is forbidden in structural inspections');
@@ -71,7 +105,8 @@ export function normalizeStructure(input) {
     nodes.push({ id: index, parentId: index === 0 ? null : original.parentId, depth: original.depth,
       name: original.name, className: original.className, path: original.path, properties });
   }
-  return { rootPath: input.rootPath, truncated: input.truncated, nodes };
+  const placeContext = normalizePlaceContext(input.placeContext);
+  return { rootPath: input.rootPath, truncated: input.truncated, nodes, placeContext };
 }
 
 export class StructureStore {
@@ -82,24 +117,30 @@ export class StructureStore {
     const observation = { structureId: randomUUID(),
       ...normalized, inspectedAt: new Date().toISOString() };
     this.observations.set(observation.structureId, observation);
-    this.latestByPath.set(observation.rootPath, observation.structureId);
+    this.latestByPath.set(structureKey(observation), observation.structureId);
     while (this.observations.size > STRUCTURE_LIMIT) {
       const oldId = this.observations.keys().next().value;
       const old = this.observations.get(oldId);
       this.observations.delete(oldId);
-      if (this.latestByPath.get(old.rootPath) === oldId) this.latestByPath.delete(old.rootPath);
+      if (this.latestByPath.get(structureKey(old)) === oldId) this.latestByPath.delete(structureKey(old));
     }
     return this.metadata(observation);
   }
 
   metadata(observation) {
-    const { structureId, rootPath, truncated, inspectedAt, nodes } = observation;
-    return { structureId, rootPath, truncated, inspectedAt, nodeCount: nodes.length };
+    const { structureId, rootPath, truncated, inspectedAt, nodes, placeContext } = observation;
+    return {
+      structureId, rootPath, truncated, inspectedAt, nodeCount: nodes.length,
+      placeContext,
+      provenanceStatus: placeContext ? 'studio_plugin_reported_not_independently_verified' : 'legacy_unidentified',
+      identityScope: !placeContext ? 'unknown' :
+        placeContext.placeId > 0 ? 'published_place_and_plugin_session' : 'plugin_session_only_unsaved_place',
+    };
   }
 
   isLatest(id) {
     const observation = this.observations.get(id);
-    return Boolean(observation && this.latestByPath.get(observation.rootPath) === id);
+    return Boolean(observation && this.latestByPath.get(structureKey(observation)) === id);
   }
 
   list() { return [...this.observations.values()].map(o => this.metadata(o)); }
