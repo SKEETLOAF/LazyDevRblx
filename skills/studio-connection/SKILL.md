@@ -1,11 +1,21 @@
 ---
 name: studio-connection
-description: Safely connect a supported local MCP host to LAZY DevKit, inspect user-selected Roblox Studio structures, and propose reviewed changes.
+description: Use official Roblox Studio MCP first for real development and testing; use optional LAZY MCP for permissioned review, references, and evidence.
 ---
 
 # LAZY DevKit: Studio connection
 
-Use only when a supported local MCP runtime has launched the LAZY DevKit bridge on the same PC as Roblox Studio.
+Use when an AI agent needs to work in Roblox Studio. **Default to the official `Roblox_Studio` MCP for ordinary inspection, source/Instance changes, playtesting, screenshots and input**. Confirm the exact tools exposed by the host in this session. LAZY's separate daemon and optional Studio plugin are additional evidence/review capabilities, not requirements for native MCP operations.
+
+For new installations or failures: the developer can run `npm run doctor` on their own machine to check LAZY's current MCP connection safely. This does **not** connect to Studio or prove a live native MCP session. See `docs/FIRST-END-TO-END-TEST.md` for the small reversible acceptance task; do not claim end-to-end success until all actual gates were observed.
+
+**Routing:** Native operation available and authorized → use native MCP. LAZY-specific reference, inspection, audit or reviewed proposal → use LAZY when independently connected. Neither available → report the limitation and do not invent an action. Do not duplicate official tools inside LAZY solely to make it look autonomous.
+
+Before using previously shared hierarchy observations, check `placeContext`, `provenanceStatus` and capture mode; `legacy_unidentified` snapshots may be from another game. Native `Roblox_Studio` MCP is still the source for current live hierarchy.
+
+For native MCP screenshots, playtests, logs or readouts obtained and **actually inspected** through another host, LAZY can optionally record **metadata-only references** using `lazydev_record_native_evidence` after explicit operator approval. It cannot fetch or validate the referenced content; the result must stay `operator_reported_native_mcp_unverified`. When assessing a plan, link only the returned evidence IDs and use `notApplicable` with a substantive reason only for genuinely out-of-scope gates. These produce `external_evidence_linked_for_review` or `not_applicable_proposed`, not success. See `docs/NATIVE-EVIDENCE-REVIEW.md`.
+
+The LAZY-only instructions below apply **only** when the optional bridge is connected:
 
 1. Confirm MCP tools are available before claiming a connection. Run `lazydev_list_structures` and report only returned data.
 2. The user decides which hierarchy or script to share. Request a Studio-side inspection if nothing is available. Never claim broad project awareness from a truncated snapshot.
