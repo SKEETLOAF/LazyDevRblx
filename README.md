@@ -1,5 +1,21 @@
 # LAZY DevKit
 
+## Native-first Studio workflow: connection check
+
+LAZY is an **optional MCP evidence/review tool**, not a replacement for the official Roblox Studio MCP. Connect `Roblox_Studio` independently to Claude Code/Codex for ordinary Studio actions. Use LAZY for opt-in reference/quality evidence.
+
+Before requesting edits, check this machine's LAZY connection:
+
+```powershell
+npm test
+npm start                 # leave this running
+# In a second PowerShell terminal:
+npm run doctor            # does not reveal tokens or edit Studio
+npm run doctor -- --json  # machine-readable diagnosis
+```
+
+The doctor checks the actual local LAZY MCP endpoint, required tools, and counts of *previously shared* evidence. It **cannot** verify native Studio MCP connectivity, a currently running Studio session, screenshot permission or a working end-to-end AI edit. See [First end-to-end Studio test](docs/FIRST-END-TO-END-TEST.md) to verify those on a disposable place and record real results. The optional LAZY Studio plugin remains a separate manual bridge; updating this repository does not update an installed plugin.
+
 **V1.7:** Opt-in local Blender scene and WAV inspections can now produce bounded evidence for existing competency reviews. This does not automate editor GUI operations, generate finished assets, grade artistry or replace Studio playtests.
 
 A public, local-first, model-independent experiment for safer AI-assisted Roblox development. **V1.4 adds a source-linked, read-only capability inventory and a strict schema for recording Studio integration-test claims. It separates historical user tests from version-bound verification, and recognizes documented native Roblox Studio MCP tools without pretending they are connected. Most V0.4-and-later Studio UI flows remain unverified.**
