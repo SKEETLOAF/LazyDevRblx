@@ -181,11 +181,22 @@ export class CompetencyStore {
     return structuredClone(plan);
   }
   assess(input,hasEvidence){
-    checkKeys(input,['planId','evidence']);
+    checkKeys(input,['planId','evidence','notApplicable']);
     const plan=this.read(input.planId);
     const entries=input.evidence===undefined?[]:input.evidence;
     if(!Array.isArray(entries)||entries.length>96)fail('Evidence must be a bounded list');
     const gates=new Map(plan.qualityGates.map(g=>[g.id,g]));
+    const na=new Map();
+    const exclusions=input.notApplicable===undefined?[]:input.notApplicable;
+    if(!Array.isArray(exclusions)||exclusions.length>30)fail('notApplicable must be a bounded list');
+    for(const item of exclusions) {
+      checkKeys(item,['gateId','reason']);
+      const gateId=str(item.gateId,'gateId',100);
+      if(!gates.has(gateId)||na.has(gateId))fail('Unknown or duplicate not-applicable gate');
+      const reason=str(item.reason,'reason',400);
+      if(reason.length<20)fail('notApplicable requires a substantive reason');
+      na.set(gateId,reason);
+    }
     const seen=new Set();
     const records=[];
     for(const entry of entries){
@@ -198,20 +209,35 @@ export class CompetencyStore {
       const key=gate.id+'|'+kind+'|'+id;
       if(seen.has(key))fail('Duplicate evidence');
       seen.add(key);
-      records.push({gateId:gate.id,kind,id,present:!!hasEvidence(kind,id)});
+      if(na.has(gate.id))fail('A gate cannot be linked as evidence and marked not applicable');
+      const found=hasEvidence(kind,id);
+      const external=found && typeof found==='object' && found.provenance==='operator_reported_native_mcp_unverified';
+      records.push({
+        gateId:gate.id,kind,id,present:!!found,
+        provenance:external?'operator_reported_native_mcp_unverified':
+          found?'local_evidence_id_present':'not_found',
+        verification:external?'not_independently_verified':
+          found?'content_requires_review':'not_available',
+      });
     }
     const results=plan.qualityGates.map(gate=>{
       const linked=records.filter(x=>x.gateId===gate.id);
       const available=linked.filter(x=>x.present);
       const missingKinds=gate.requiredKinds.filter(kind=>!available.some(x=>x.kind===kind));
       const unsupported=missingKinds.filter(kind=>!EVIDENCE_SET.has(kind));
+      const reason=na.get(gate.id)??null;
+      const externallyLinked=available.some(x=>x.provenance==='operator_reported_native_mcp_unverified');
       return {
         gateId:gate.id,discipline:gate.discipline,question:gate.question,
         review:gate.review,requiredKinds:[...gate.requiredKinds],
         evidence:linked,
         missingKinds,unsupportedKinds:unsupported,
-        evidenceStatus:unsupported.length?'instrumentation_unavailable':
-          missingKinds.length?(gate.appliesWhen==='always'?'evidence_missing':'conditional_unverified'):'ready_for_review',
+        notApplicableReason:reason,
+        applicabilityReview:reason?'operator_proposed_not_verified':'not_assessed',
+        evidenceStatus:reason?'not_applicable_proposed':
+          unsupported.length?'instrumentation_unavailable':
+          missingKinds.length?(gate.appliesWhen==='always'?'evidence_missing':'conditional_unverified'):
+          externallyLinked?'external_evidence_linked_for_review':'ready_for_review',
         appliesWhen:gate.appliesWhen,
         qualityVerdict:'not_assessed',
       };
@@ -222,11 +248,13 @@ export class CompetencyStore {
       missing:results.filter(g=>g.evidenceStatus==='evidence_missing').length,
       conditional:results.filter(g=>g.evidenceStatus==='conditional_unverified').length,
       instrumentationUnavailable:results.filter(g=>g.evidenceStatus==='instrumentation_unavailable').length,
+      externalLinked:results.filter(g=>g.evidenceStatus==='external_evidence_linked_for_review').length,
+      notApplicableProposed:results.filter(g=>g.evidenceStatus==='not_applicable_proposed').length,
     };
     return {
       planId:plan.planId,assessedAt:new Date().toISOString(),counts,gates:results,
       overallVerdict:'not_assessed',
-      warning:'A matching snapshot ID only proves stored evidence exists. No artistic, technical or functional criterion was automatically passed; evidence needs actual inspection, and some instruments are not implemented.',
+      warning:'Local IDs indicate stored evidence only. External native MCP references are operator-reported pointers, not validated receipts or images. Not-applicable choices are proposals requiring review. No functional, creative or quality gate is automatically passed.',
     };
   }
 }
